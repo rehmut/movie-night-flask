@@ -1,0 +1,76 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Manage {{ event.title }} · Movie Nights{% endblock %}
+
+{% block content %}
+  <section class="card" style="margin-bottom: 2rem;">
+    <div class="tag">{{ event.starts_at.strftime('%A %d %B %Y · %I:%M %p') }}</div>
+    <h1 style="margin: 0.6rem 0 0.4rem;">{{ event.title }}</h1>
+    <p style="color: var(--muted); margin: 0 0 0.6rem;">{{ event.location }}</p>
+    {% if event.notes %}
+      <p style="margin: 0 0 1rem;">{{ event.notes }}</p>
+    {% endif %}
+    <div style="display: flex; gap: 1.2rem; flex-wrap: wrap;">
+      <span class="badge yes">Confirmed {{ event.confirmed_invites()|length }} / {{ event.capacity }}</span>
+      <span class="badge waitlist">Waitlist {{ event.waitlisted_invites()|length }}</span>
+      <span class="badge">Declined {{ event.declined_invites()|length }}</span>
+      <a class="btn btn-secondary" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom: 2rem;">
+    <h2 style="margin-top: 0;">Invite guests</h2>
+    <p style="color: var(--muted);">Paste one email per line (or comma separated). Optionally align names line-by-line.</p>
+    <form method="post" action="{{ url_for('admin_add_invites', event_id=event.id) }}">
+      <div>
+        <label for="emails">Emails</label>
+        <textarea id="emails" name="emails" rows="4" placeholder="guest@example.com"></textarea>
+      </div>
+      <div>
+        <label for="names">Names (optional)</label>
+        <textarea id="names" name="names" rows="4" placeholder="Guest name (align with emails)"></textarea>
+      </div>
+      <button class="btn" type="submit">Generate invites</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2 style="margin-top: 0;">Invite roster</h2>
+    {% if event.invites %}
+      <div style="overflow-x: auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Seat</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in event.invites %}
+              <tr>
+                <td>{{ invite.display_name() }}</td>
+                <td style="color: var(--muted);">{{ invite.email }}</td>
+                <td>
+                  <span class="badge {{ invite.status }}">{{ invite.status }}</span>
+                  {% if invite.responded_at %}
+                    <div style="font-size: 0.7rem; color: var(--muted);">{{ invite.responded_at.strftime('%d %b %Y %H:%M') }}</div>
+                  {% endif %}
+                </td>
+                <td>{{ invite.seat_number or '—' }}</td>
+                <td style="font-size: 0.75rem;">
+                  <a href="{{ invite_links[invite.id] }}" target="_blank" rel="noreferrer">Open link</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--muted);">No invites yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+

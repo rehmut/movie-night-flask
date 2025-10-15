@@ -1,0 +1,39 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Movie Nights{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <div class="container">
+      <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="tag">Movie Nights</a>
+        <div>
+          {% if session.get('is_admin') %}
+            <a class="btn btn-secondary" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="btn btn-secondary" href="{{ url_for('admin_logout') }}">Sign out</a>
+          {% else %}
+            <a class="btn btn-secondary" href="{{ url_for('admin_login') }}">Admin</a>
+          {% endif %}
+        </div>
+      </nav>
+
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+
+      <footer>
+        Curated screenings with friends. Built for quick RSVP tracking.
+      </footer>
+    </div>
+  </body>
+</html>
+

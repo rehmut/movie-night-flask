@@ -1,0 +1,20 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Admin Sign In · Movie Nights{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width: 420px; margin: 4rem auto;">
+    <h1 style="margin-bottom: 1.5rem;">Admin sign-in</h1>
+    <form method="post">
+      <div>
+        <label for="password">Admin password</label>
+        <input id="password" name="password" type="password" required>
+      </div>
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted);">
+      Set or change the password with the <code>ADMIN_PASSWORD</code> environment variable.
+    </p>
+  </div>
+{% endblock %}
+

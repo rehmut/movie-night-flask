@@ -1,0 +1,49 @@
+﻿{% extends "base.html" %}
+
+{% block title %}RSVP · {{ event.title }}{% endblock %}
+
+{% block content %}
+  <section class="card" style="max-width: 720px; margin: 0 auto 2rem;">
+    <div class="tag">{{ event.starts_at.strftime('%A %d %B %Y · %I:%M %p') }}</div>
+    <h1 style="margin: 0.6rem 0 0.5rem;">{{ event.title }}</h1>
+    <p style="color: var(--muted); margin: 0 0 0.6rem;">{{ event.location }}</p>
+    {% if event.synopsis %}
+      <p style="margin: 0 0 1rem;">{{ event.synopsis }}</p>
+    {% endif %}
+    {% if event.poster_url %}
+      <img src="{{ event.poster_url }}" alt="Poster" style="width: 100%; max-height: 320px; object-fit: cover; border-radius: 16px; margin-bottom: 1rem;">
+    {% endif %}
+    <p style="color: var(--muted);">
+      Confirmed {{ confirmed_count }} / {{ event.capacity }} · Seats remaining {{ seats_remaining }} · Waitlist {{ event.waitlisted_invites()|length }}
+    </p>
+  </section>
+
+  <section class="card" style="max-width: 720px; margin: 0 auto;">
+    <h2 style="margin-top: 0;">RSVP</h2>
+    <form method="post">
+      <div>
+        <label for="name">Your name</label>
+        <input id="name" name="name" value="{{ invite.name or '' }}" placeholder="Your display name" required>
+      </div>
+      <div>
+        <label>Attendance</label>
+        <div style="display: flex; gap: 0.8rem;">
+          <label style="display: flex; align-items: center; gap: 0.4rem;">
+            <input type="radio" name="status" value="yes" {% if invite.status == 'yes' %}checked{% endif %}> Attending
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.4rem;">
+            <input type="radio" name="status" value="waitlist" {% if invite.status == 'waitlist' %}checked{% endif %}> Waitlist me
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.4rem;">
+            <input type="radio" name="status" value="no" {% if invite.status == 'no' %}checked{% endif %}> Not coming
+          </label>
+        </div>
+      </div>
+      <button class="btn" type="submit">Save RSVP</button>
+    </form>
+    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted);">
+      Invite sent to {{ invite.email }} · Share this link only with the intended guest.
+    </p>
+  </section>
+{% endblock %}
+

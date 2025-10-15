@@ -1,0 +1,45 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Create Event · Movie Nights{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width: 720px; margin: 0 auto;">
+    <h1 style="margin-bottom: 1.5rem;">New screening</h1>
+    <form method="post">
+      <div>
+        <label for="letterboxd_url">Letterboxd link</label>
+        <input id="letterboxd_url" name="letterboxd_url" type="url" placeholder="https://letterboxd.com/film/..." required>
+      </div>
+      <div>
+        <label for="title">Title override (optional)</label>
+        <input id="title" name="title" placeholder="Auto-detected from Letterboxd" >
+      </div>
+      <div>
+        <label for="synopsis">Synopsis override (optional)</label>
+        <textarea id="synopsis" name="synopsis" rows="4" placeholder="Paste your own copy if Letterboxd is missing or you want custom notes."></textarea>
+      </div>
+      <div>
+        <label for="poster_url">Poster URL override (optional)</label>
+        <input id="poster_url" name="poster_url" type="url" placeholder="https://...">
+      </div>
+      <div>
+        <label for="starts_at">Starts at</label>
+        <input id="starts_at" name="starts_at" type="datetime-local" required>
+      </div>
+      <div>
+        <label for="location">Location</label>
+        <input id="location" name="location" placeholder="Apartment, cinema room, etc." required>
+      </div>
+      <div>
+        <label for="capacity">Seat capacity</label>
+        <input id="capacity" name="capacity" type="number" min="1" step="1" value="10" required>
+      </div>
+      <div>
+        <label for="notes">Notes for guests (optional)</label>
+        <textarea id="notes" name="notes" rows="3" placeholder="Snacks provided, BYOB, arrive 15 minutes early..."></textarea>
+      </div>
+      <button class="btn" type="submit">Create event</button>
+    </form>
+  </div>
+{% endblock %}
+
