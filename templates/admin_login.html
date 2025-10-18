@@ -1,19 +1,19 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Admin Sign In · Movie Nights{% endblock %}
+{% block title %}Admin-Anmeldung – Filmabende{% endblock %}
 
 {% block content %}
   <div class="card" style="max-width: 420px; margin: 4rem auto;">
-    <h1 style="margin-bottom: 1.5rem;">Admin sign-in</h1>
+    <h1 style="margin-bottom: 1.5rem;">Admin-Anmeldung</h1>
     <form method="post">
       <div>
-        <label for="password">Admin password</label>
+        <label for="password">Admin-Passwort</label>
         <input id="password" name="password" type="password" required>
       </div>
-      <button class="btn" type="submit">Sign in</button>
+      <button class="btn" type="submit">Anmelden</button>
     </form>
     <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted);">
-      Set or change the password with the <code>ADMIN_PASSWORD</code> environment variable.
+      Passe das Passwort über die Umgebungsvariable <code>ADMIN_PASSWORD</code> an.
     </p>
   </div>
 {% endblock %}

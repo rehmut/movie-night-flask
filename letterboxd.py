@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from typing import Dict
@@ -19,13 +19,13 @@ class LetterboxdError(RuntimeError):
 
 def normalize_letterboxd_url(url: str) -> str:
     if not url:
-        raise LetterboxdError("Letterboxd URL is required")
+        raise LetterboxdError("Letterboxd-Link wird benötigt")
     if not url.startswith("http"):
         url = "https://" + url
 
     parsed = urlparse(url)
     if not parsed.netloc.endswith("letterboxd.com"):
-        raise LetterboxdError("URL must be from letterboxd.com")
+        raise LetterboxdError("URL muss von letterboxd.com stammen")
 
     cleaned = parsed._replace(query="", fragment="").geturl()
     return cleaned.rstrip("/")
@@ -39,11 +39,11 @@ def fetch_metadata(letterboxd_url: str) -> Dict[str, str]:
     try:
         response = requests.get(normalized, timeout=timeout, headers=headers)
     except requests.RequestException as exc:
-        raise LetterboxdError("Unable to reach Letterboxd") from exc
+        raise LetterboxdError("Letterboxd ist nicht erreichbar") from exc
 
     if response.status_code >= 400:
         raise LetterboxdError(
-            f"Failed to fetch Letterboxd page (status {response.status_code})"
+            f"Letterboxd-Seite konnte nicht geladen werden (Status {response.status_code})"
         )
 
     html = response.text

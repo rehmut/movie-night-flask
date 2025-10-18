@@ -1,48 +1,48 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}RSVP · {{ event.title }}{% endblock %}
+{% block title %}Zusagen – {{ event.title }}{% endblock %}
 
 {% block content %}
   <section class="card" style="max-width: 720px; margin: 0 auto 2rem;">
-    <div class="tag">{{ event.starts_at.strftime('%A %d %B %Y · %I:%M %p') }}</div>
+    <div class="tag">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
     <h1 style="margin: 0.6rem 0 0.5rem;">{{ event.title }}</h1>
     <p style="color: var(--muted); margin: 0 0 0.6rem;">{{ event.location }}</p>
+    {% if event.poster_url %}
+      <img src="{{ event.poster_url }}" alt="Poster" style="width: 100%; max-height: 360px; object-fit: cover; border-radius: 16px; margin-bottom: 1rem;">
+    {% endif %}
     {% if event.synopsis %}
       <p style="margin: 0 0 1rem;">{{ event.synopsis }}</p>
     {% endif %}
-    {% if event.poster_url %}
-      <img src="{{ event.poster_url }}" alt="Poster" style="width: 100%; max-height: 320px; object-fit: cover; border-radius: 16px; margin-bottom: 1rem;">
-    {% endif %}
     <p style="color: var(--muted);">
-      Confirmed {{ confirmed_count }} / {{ event.capacity }} · Seats remaining {{ seats_remaining }} · Waitlist {{ event.waitlisted_invites()|length }}
+      Zusagen {{ confirmed_count }} / {{ event.capacity }} – Plätze frei {{ seats_remaining }} – Warteliste {{ event.waitlisted_invites()|length }}
     </p>
   </section>
 
   <section class="card" style="max-width: 720px; margin: 0 auto;">
-    <h2 style="margin-top: 0;">RSVP</h2>
+    <h2 style="margin-top: 0;">Deine Antwort</h2>
     <form method="post">
       <div>
-        <label for="name">Your name</label>
-        <input id="name" name="name" value="{{ invite.name or '' }}" placeholder="Your display name" required>
+        <label for="name">Dein Name</label>
+        <input id="name" name="name" value="{{ invite.name or '' }}" placeholder="Wie soll ich dich eintragen?" required>
       </div>
       <div>
-        <label>Attendance</label>
-        <div style="display: flex; gap: 0.8rem;">
+        <label>Teilnahme</label>
+        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
           <label style="display: flex; align-items: center; gap: 0.4rem;">
-            <input type="radio" name="status" value="yes" {% if invite.status == 'yes' %}checked{% endif %}> Attending
+            <input type="radio" name="status" value="yes" {% if invite.status == 'yes' %}checked{% endif %}> Ich bin dabei
           </label>
           <label style="display: flex; align-items: center; gap: 0.4rem;">
-            <input type="radio" name="status" value="waitlist" {% if invite.status == 'waitlist' %}checked{% endif %}> Waitlist me
+            <input type="radio" name="status" value="waitlist" {% if invite.status == 'waitlist' %}checked{% endif %}> Setz mich auf die Warteliste
           </label>
           <label style="display: flex; align-items: center; gap: 0.4rem;">
-            <input type="radio" name="status" value="no" {% if invite.status == 'no' %}checked{% endif %}> Not coming
+            <input type="radio" name="status" value="no" {% if invite.status == 'no' %}checked{% endif %}> Ich schaffe es leider nicht
           </label>
         </div>
       </div>
-      <button class="btn" type="submit">Save RSVP</button>
+      <button class="btn" type="submit">Antwort speichern</button>
     </form>
     <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted);">
-      Invite sent to {{ invite.email }} · Share this link only with the intended guest.
+      Einladung an {{ invite.email }} – bitte diesen Link nicht weitergeben.
     </p>
   </section>
 {% endblock %}

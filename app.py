@@ -1,12 +1,17 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
+import base64
+import csv
+import io
 import secrets
 from datetime import datetime
 from functools import wraps
 from typing import List
 
+import qrcode
 from flask import (
     Flask,
+    Response,
     abort,
     flash,
     redirect,
@@ -37,7 +42,7 @@ def create_app() -> Flask:
         @wraps(view)
         def wrapped(*args, **kwargs):
             if not is_admin():
-                flash("Please sign in to access the admin area.", "warning")
+                flash("Bitte melde dich an, um den Adminbereich zu öffnen.", "warning")
                 return redirect(url_for("admin_login", next=request.path))
             return view(*args, **kwargs)
 
@@ -69,6 +74,21 @@ def create_app() -> Flask:
                 invite.mark("yes", seat)
                 promoted.append(invite)
         return promoted
+
+    def resolve_letterboxd_metadata(letterboxd_url: str) -> tuple[str, dict[str, str], str | None]:
+        metadata: dict[str, str] = {}
+        normalized_url: str | None = None
+        warning: str | None = None
+        try:
+            metadata = fetch_metadata(letterboxd_url)
+            normalized_url = metadata.get("canonical_url")
+        except LetterboxdError as exc:
+            warning = f"Letterboxd-Daten konnten nicht geladen werden: {exc}"
+            try:
+                normalized_url = normalize_letterboxd_url(letterboxd_url)
+            except LetterboxdError:
+                normalized_url = letterboxd_url
+        return normalized_url or letterboxd_url, metadata, warning
 
     @app.context_processor
     def inject_utilities():
@@ -102,16 +122,16 @@ def create_app() -> Flask:
             password = request.form.get("password", "")
             if password == app.config["ADMIN_PASSWORD"]:
                 session["is_admin"] = True
-                flash("Welcome back!", "success")
+                flash("Willkommen zurück!", "success")
                 next_url = request.args.get("next")
                 return redirect(next_url or url_for("admin_dashboard"))
-            flash("Incorrect password.", "danger")
+            flash("Passwort stimmt nicht.", "danger")
         return render_template("admin_login.html")
 
     @app.route("/admin/logout")
     def admin_logout():
         session.pop("is_admin", None)
-        flash("Signed out.", "info")
+        flash("Abgemeldet.", "info")
         return redirect(url_for("index"))
 
     @app.route("/admin")
@@ -130,32 +150,33 @@ def create_app() -> Flask:
             poster_url = request.form.get("poster_url", "").strip()
             starts_at_raw = request.form.get("starts_at", "").strip()
             location = request.form.get("location", "").strip()
-            capacity = int(request.form.get("capacity", "0") or "0")
+            capacity_raw = request.form.get("capacity", "0").strip()
             notes = request.form.get("notes", "").strip() or None
 
-            if not letterboxd_url or not starts_at_raw or not location or capacity <= 0:
-                flash("Please fill in all required fields.", "warning")
+            if not letterboxd_url or not starts_at_raw or not location:
+                flash("Bitte fülle alle Pflichtfelder aus.", "warning")
                 return render_template("admin_event_new.html")
 
             try:
                 starts_at = datetime.strptime(starts_at_raw, "%Y-%m-%dT%H:%M")
             except ValueError:
-                flash("Invalid date format.", "warning")
+                flash("Ungültiges Datumsformat.", "warning")
                 return render_template("admin_event_new.html")
 
-            normalized_url = None
-            metadata = {}
             try:
-                metadata = fetch_metadata(letterboxd_url)
-                normalized_url = metadata.get("canonical_url")
-            except LetterboxdError as exc:
-                flash(f"Metadata fetch failed: {exc}", "warning")
-                try:
-                    normalized_url = normalize_letterboxd_url(letterboxd_url)
-                except LetterboxdError:
-                    normalized_url = letterboxd_url
+                capacity = int(capacity_raw or "0")
+            except ValueError:
+                capacity = 0
 
-            title = title or metadata.get("title") or "Untitled screening"
+            if capacity <= 0:
+                flash("Lege mindestens einen Platz fest.", "warning")
+                return render_template("admin_event_new.html")
+
+            normalized_url, metadata, warning = resolve_letterboxd_metadata(letterboxd_url)
+            if warning:
+                flash(warning, "warning")
+
+            title = title or metadata.get("title") or "Noch ohne Titel"
             synopsis = synopsis or metadata.get("synopsis")
             poster_url = poster_url or metadata.get("poster_url")
 
@@ -172,7 +193,7 @@ def create_app() -> Flask:
             db.session.add(event)
             db.session.commit()
 
-            flash("Event created.", "success")
+            flash("Event erstellt.", "success")
             return redirect(url_for("admin_event_detail", event_id=event.id))
 
         return render_template("admin_event_new.html")
@@ -191,6 +212,72 @@ def create_app() -> Flask:
             invite_links=invite_links,
         )
 
+    @app.route("/admin/events/<int:event_id>/edit", methods=["GET", "POST"])
+    @login_required
+    def admin_edit_event(event_id: int):
+        event = Event.query.get_or_404(event_id)
+
+        if request.method == "POST":
+            letterboxd_url = request.form.get("letterboxd_url", "").strip()
+            title = request.form.get("title", "").strip()
+            synopsis = request.form.get("synopsis", "").strip()
+            poster_url = request.form.get("poster_url", "").strip()
+            starts_at_raw = request.form.get("starts_at", "").strip()
+            location = request.form.get("location", "").strip()
+            capacity_raw = request.form.get("capacity", "0").strip()
+            notes = request.form.get("notes", "").strip() or None
+
+            if not letterboxd_url or not starts_at_raw or not location:
+                flash("Bitte fülle alle Pflichtfelder aus.", "warning")
+                return render_template("admin_event_edit.html", event=event)
+
+            try:
+                starts_at = datetime.strptime(starts_at_raw, "%Y-%m-%dT%H:%M")
+            except ValueError:
+                flash("Ungültiges Datumsformat.", "warning")
+                return render_template("admin_event_edit.html", event=event)
+
+            try:
+                capacity = int(capacity_raw or "0")
+            except ValueError:
+                capacity = 0
+
+            if capacity <= 0:
+                flash("Lege mindestens einen Platz fest.", "warning")
+                return render_template("admin_event_edit.html", event=event)
+
+            normalized_url, metadata, warning = resolve_letterboxd_metadata(letterboxd_url)
+            if warning:
+                flash(warning, "warning")
+
+            title = title or metadata.get("title") or "Noch ohne Titel"
+            synopsis = synopsis or metadata.get("synopsis")
+            poster_url = poster_url or metadata.get("poster_url")
+
+            event.title = title
+            event.letterboxd_url = normalized_url
+            event.synopsis = synopsis
+            event.poster_url = poster_url
+            event.starts_at = starts_at
+            event.location = location
+            event.capacity = capacity
+            event.notes = notes
+
+            db.session.commit()
+            flash("Event aktualisiert.", "success")
+            return redirect(url_for("admin_event_detail", event_id=event.id))
+
+        return render_template("admin_event_edit.html", event=event)
+
+    @app.post("/admin/events/<int:event_id>/delete")
+    @login_required
+    def admin_delete_event(event_id: int):
+        event = Event.query.get_or_404(event_id)
+        db.session.delete(event)
+        db.session.commit()
+        flash("Event gelöscht.", "info")
+        return redirect(url_for("admin_dashboard"))
+
     @app.post("/admin/events/<int:event_id>/invites")
     @login_required
     def admin_add_invites(event_id: int):
@@ -205,7 +292,7 @@ def create_app() -> Flask:
         names = [name.strip() for name in names_raw.splitlines() if name.strip()]
 
         if not emails:
-            flash("Add at least one email.", "warning")
+            flash("Bitte mindestens eine E-Mail eintragen.", "warning")
             return redirect(url_for("admin_event_detail", event_id=event.id))
 
         created = 0
@@ -232,10 +319,49 @@ def create_app() -> Flask:
         db.session.commit()
 
         if created:
-            flash(f"Created {created} invite(s). Share the RSVP links below.", "success")
+            word_created = "Einladung" if created == 1 else "Einladungen"
+            flash(f"{created} {word_created} erzeugt. Die Links findest du unten.", "success")
         if updated:
-            flash(f"Updated {updated} existing invite(s).", "info")
+            word_updated = "Einladung" if updated == 1 else "Einladungen"
+            flash(f"{updated} bestehende {word_updated} aktualisiert.", "info")
         return redirect(url_for("admin_event_detail", event_id=event.id))
+
+    @app.get("/admin/events/<int:event_id>/invites/export")
+    @login_required
+    def admin_export_invites(event_id: int):
+        event = Event.query.get_or_404(event_id)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Name",
+            "Email",
+            "Status",
+            "Sitz",
+            "Einladungslink",
+            "QR-Code",
+        ])
+        status_map = {"yes": "Zusage", "waitlist": "Warteliste", "no": "Absage", "pending": "Offen"}
+        for invite in event.invites:
+            invite_link = url_for("invite", token=invite.token, _external=True)
+            qr_image = qrcode.make(invite_link)
+            buffer = io.BytesIO()
+            qr_image.save(buffer, format="PNG")
+            qr_data = base64.b64encode(buffer.getvalue()).decode("ascii")
+            qr_data_uri = f"data:image/png;base64,{qr_data}"
+            writer.writerow(
+                [
+                    invite.display_name(),
+                    invite.email,
+                    status_map.get(invite.status, invite.status),
+                    invite.seat_number or "",
+                    invite_link,
+                    qr_data_uri,
+                ]
+            )
+        response = Response(output.getvalue(), mimetype="text/csv")
+        filename = f"event-{event.id}-invites.csv"
+        response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
     @app.route("/invite/<token>", methods=["GET", "POST"])
     def invite(token: str):
@@ -251,7 +377,7 @@ def create_app() -> Flask:
                 invite.name = name
 
             if status not in {"yes", "no", "waitlist"}:
-                flash("Invalid selection.", "warning")
+                flash("Ungültige Auswahl.", "warning")
                 return redirect(url_for("invite", token=token))
 
             if status == "yes":
@@ -262,16 +388,16 @@ def create_app() -> Flask:
                     seat = next_seat_number(event, exclude_invite=invite.id)
                     invite.mark("yes", seat)
                     message = (
-                        f"Seat reserved! You are in seat {seat}."
+                        f"Platz reserviert! Du sitzt auf Platz {seat}."
                         if seat
-                        else "Seat confirmed!"
+                        else "Platz bestätigt!"
                     )
                 else:
                     invite.mark("waitlist", None)
-                    message = "Event is full. You are on the waitlist."
+                    message = "Event ist voll. Du stehst auf der Warteliste."
             elif status == "waitlist":
                 invite.mark("waitlist", None)
-                message = "You are on the waitlist."
+                message = "Du stehst auf der Warteliste."
             else:  # status == "no"
                 was_confirmed = invite.status == "yes"
                 invite.mark("no", None)
@@ -279,10 +405,10 @@ def create_app() -> Flask:
                 promoted = []
                 if was_confirmed:
                     promoted = promote_waitlist(event)
-                message = "RSVP updated. Maybe next time!"
+                message = "Antwort gespeichert. Vielleicht klappt es beim nächsten Mal!"
                 if promoted:
                     promoted_names = ", ".join(p.display_name() for p in promoted)
-                    message += f" Promoted from waitlist: {promoted_names}."
+                    message += f" Warteliste nachgerückt: {promoted_names}."
 
             db.session.commit()
             flash(message, "success")
@@ -309,3 +435,6 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+

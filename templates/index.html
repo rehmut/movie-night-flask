@@ -1,42 +1,41 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Movie Nights{% endblock %}
+{% block title %}Filmabende{% endblock %}
 
 {% block content %}
   <header class="hero">
-    <h1 style="font-size: 2.8rem; margin-bottom: 0.6rem;">Private movie nights, on your schedule.</h1>
+    <h1 style="font-size: 2.8rem; margin-bottom: 0.6rem;">Die kalte Jahreszeit hat begonnen – lasst uns gemeinsam in meinem Heimkino Filme schauen.</h1>
     <p style="color: var(--muted); max-width: 620px;">
-      RSVP-only screenings with curated picks. Hosts add a Letterboxd link, guests reserve seats, and a waitlist takes care of the rest.
+      Ein kleiner Freundeskreis, Snacks, warme Decken und handverlesene Filme. Ich freue mich auf gemütliche Abende mit euch.
     </p>
   </header>
 
   <section style="margin-bottom: 3rem;">
-    <h2 class="tag" style="margin-bottom: 1.5rem;">Upcoming</h2>
+    <h2 class="tag" style="margin-bottom: 1.5rem;">Bevorstehende Abende</h2>
     {% if events %}
       <div class="card-grid">
         {% for event in events %}
           <article class="card">
-            <div style="display: flex; gap: 1rem;">
-              {% if event.poster_url %}
-                <img src="{{ event.poster_url }}" alt="{{ event.title }} poster" style="width: 120px; height: 180px; object-fit: cover; border-radius: 16px;">
+            {% if event.poster_url %}
+              <img src="{{ event.poster_url }}" alt="Filmplakat zu {{ event.title }}" style="width: 220px; height: 320px; object-fit: cover; border-radius: 18px; align-self: center;">
+            {% endif %}
+            <div class="tag" style="margin-bottom: 0.6rem;">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
+            <h3 style="margin: 0 0 0.4rem; font-size: 1.5rem;">{{ event.title }}</h3>
+            <p style="color: var(--muted); margin: 0 0 0.7rem;">{{ event.location }}</p>
+            {% if event.synopsis %}
+              <p style="font-size: 0.95rem; color: var(--muted);">{{ event.synopsis }}</p>
+            {% endif %}
+            <p style="font-size: 0.95rem; color: var(--muted); margin-top: 0.4rem;">
+              {% if event.available_seats() > 0 %}
+                Noch {{ event.available_seats() }} Platz/Plätze frei
+              {% else %}
+                Ausgebucht – Warteliste {{ event.waitlisted_invites()|length }}
               {% endif %}
-              <div>
-                <div class="tag" style="margin-bottom: 0.6rem;">{{ event.starts_at.strftime('%a %d %b · %I:%M %p') }}</div>
-                <h3 style="margin: 0 0 0.4rem; font-size: 1.5rem;">{{ event.title }}</h3>
-                <p style="color: var(--muted); margin: 0 0 0.7rem;">{{ event.location }}</p>
-                <p style="font-size: 0.95rem; color: var(--muted);">
-                  {% if event.available_seats() > 0 %}
-                    {{ event.available_seats() }} seat(s) left
-                  {% else %}
-                    Currently full · waitlist {{ event.waitlisted_invites()|length }}
-                  {% endif %}
-                </p>
-              </div>
-            </div>
-            <div style="display: flex; gap: 0.6rem;">
+            </p>
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
               <a class="btn" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
               {% if session.get('is_admin') %}
-                <a class="btn btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Manage</a>
+                <a class="btn btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Verwalten</a>
               {% endif %}
             </div>
           </article>
@@ -44,25 +43,25 @@
       </div>
     {% else %}
       <div class="card">
-        <p>No screenings scheduled yet. Add one from the admin dashboard.</p>
+        <p>Noch keine Filmabende geplant. Im Adminbereich kannst du den ersten Abend anlegen.</p>
       </div>
     {% endif %}
   </section>
 
   <section>
-    <h2 class="tag" style="margin-bottom: 1.5rem;">Recent Nights</h2>
+    <h2 class="tag" style="margin-bottom: 1.5rem;">Kürzlich gelaufene Filme</h2>
     {% if past_events %}
       <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem;">
         {% for event in past_events %}
           <li style="padding: 1rem 1.4rem; border-radius: 16px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(148, 163, 184, 0.2);">
             <strong>{{ event.title }}</strong>
-            <span style="color: var(--muted);">— {{ event.starts_at.strftime('%d %b %Y') }}</span>
-            <span style="color: var(--muted); float: right;">{{ event.confirmed_invites()|length }} attended</span>
+            <span style="color: var(--muted);"> – {{ event.starts_at.strftime('%d.%m.%Y') }}</span>
+            <span style="color: var(--muted); float: right;">{{ event.confirmed_invites()|length }} Gäste</span>
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p style="color: var(--muted);">No past events yet. Your first premiere awaits!</p>
+      <p style="color: var(--muted);">Noch keine vergangenen Abende – der erste Couchmarathon steht bevor.</p>
     {% endif %}
   </section>
 {% endblock %}

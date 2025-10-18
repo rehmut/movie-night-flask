@@ -1,67 +1,75 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Manage {{ event.title }} · Movie Nights{% endblock %}
+{% block title %}{{ event.title }} verwalten – Filmabende{% endblock %}
 
 {% block content %}
   <section class="card" style="margin-bottom: 2rem;">
-    <div class="tag">{{ event.starts_at.strftime('%A %d %B %Y · %I:%M %p') }}</div>
+    <div class="tag">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
     <h1 style="margin: 0.6rem 0 0.4rem;">{{ event.title }}</h1>
     <p style="color: var(--muted); margin: 0 0 0.6rem;">{{ event.location }}</p>
     {% if event.notes %}
       <p style="margin: 0 0 1rem;">{{ event.notes }}</p>
     {% endif %}
     <div style="display: flex; gap: 1.2rem; flex-wrap: wrap;">
-      <span class="badge yes">Confirmed {{ event.confirmed_invites()|length }} / {{ event.capacity }}</span>
-      <span class="badge waitlist">Waitlist {{ event.waitlisted_invites()|length }}</span>
-      <span class="badge">Declined {{ event.declined_invites()|length }}</span>
+      <span class="badge yes">Zusagen {{ event.confirmed_invites()|length }} / {{ event.capacity }}</span>
+      <span class="badge waitlist">Warteliste {{ event.waitlisted_invites()|length }}</span>
+      <span class="badge">Absagen {{ event.declined_invites()|length }}</span>
       <a class="btn btn-secondary" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
+    </div>
+    <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1rem;">
+      <a class="btn btn-secondary" href="{{ url_for('admin_edit_event', event_id=event.id) }}">Event bearbeiten</a>
+      <a class="btn btn-secondary" href="{{ url_for('admin_export_invites', event_id=event.id) }}">Einladungen exportieren</a>
+      <form method="post" action="{{ url_for('admin_delete_event', event_id=event.id) }}" style="display: inline;" onsubmit="return confirm('Event wirklich löschen? Dieser Schritt kann nicht rückgängig gemacht werden.');">
+        <button class="btn btn-secondary" type="submit" style="border-color: rgba(248, 113, 113, 0.4); color: var(--danger);">Event löschen</button>
+      </form>
     </div>
   </section>
 
   <section class="card" style="margin-bottom: 2rem;">
-    <h2 style="margin-top: 0;">Invite guests</h2>
-    <p style="color: var(--muted);">Paste one email per line (or comma separated). Optionally align names line-by-line.</p>
+    <h2 style="margin-top: 0;">Gäste einladen</h2>
+    <p style="color: var(--muted);">Eine E-Mail pro Zeile (oder kommasepariert). Namen optional Zeile für Zeile zuordnen.</p>
     <form method="post" action="{{ url_for('admin_add_invites', event_id=event.id) }}">
       <div>
-        <label for="emails">Emails</label>
-        <textarea id="emails" name="emails" rows="4" placeholder="guest@example.com"></textarea>
+        <label for="emails">E-Mails</label>
+        <textarea id="emails" name="emails" rows="4" placeholder="gast@example.com"></textarea>
       </div>
       <div>
-        <label for="names">Names (optional)</label>
-        <textarea id="names" name="names" rows="4" placeholder="Guest name (align with emails)"></textarea>
+        <label for="names">Namen (optional)</label>
+        <textarea id="names" name="names" rows="4" placeholder="Name passend zur Reihenfolge der E-Mails"></textarea>
       </div>
-      <button class="btn" type="submit">Generate invites</button>
+      <button class="btn" type="submit">Einladungen erzeugen</button>
     </form>
   </section>
 
   <section class="card">
-    <h2 style="margin-top: 0;">Invite roster</h2>
+    <h2 style="margin-top: 0;">Einladungsübersicht</h2>
     {% if event.invites %}
       <div style="overflow-x: auto;">
         <table class="table">
           <thead>
             <tr>
               <th>Name</th>
-              <th>Email</th>
+              <th>E-Mail</th>
               <th>Status</th>
-              <th>Seat</th>
+              <th>Sitz</th>
               <th>Link</th>
             </tr>
           </thead>
+          {% set status_map = {'yes': 'Zusage', 'waitlist': 'Warteliste', 'no': 'Absage', 'pending': 'Offen'} %}
           <tbody>
             {% for invite in event.invites %}
               <tr>
                 <td>{{ invite.display_name() }}</td>
                 <td style="color: var(--muted);">{{ invite.email }}</td>
                 <td>
-                  <span class="badge {{ invite.status }}">{{ invite.status }}</span>
+                  <span class="badge {{ invite.status }}">{{ status_map.get(invite.status, invite.status) }}</span>
                   {% if invite.responded_at %}
-                    <div style="font-size: 0.7rem; color: var(--muted);">{{ invite.responded_at.strftime('%d %b %Y %H:%M') }}</div>
+                    <div style="font-size: 0.7rem; color: var(--muted);">{{ invite.responded_at.strftime('%d.%m.%Y %H:%M') }}</div>
                   {% endif %}
                 </td>
-                <td>{{ invite.seat_number or '—' }}</td>
+                <td>{{ invite.seat_number or '-' }}</td>
                 <td style="font-size: 0.75rem;">
-                  <a href="{{ invite_links[invite.id] }}" target="_blank" rel="noreferrer">Open link</a>
+                  <a href="{{ invite_links[invite.id] }}" target="_blank" rel="noreferrer">Link öffnen</a>
                 </td>
               </tr>
             {% endfor %}
@@ -69,7 +77,7 @@
         </table>
       </div>
     {% else %}
-      <p style="color: var(--muted);">No invites yet.</p>
+      <p style="color: var(--muted);">Noch keine Einladungen.</p>
     {% endif %}
   </section>
 {% endblock %}

@@ -1,32 +1,32 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Dashboard · Movie Nights{% endblock %}
+{% block title %}Übersicht – Filmabende{% endblock %}
 
 {% block content %}
   <header class="hero" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;">
     <div>
-      <h1 style="margin-bottom: 0.6rem;">Dashboard</h1>
-      <p style="color: var(--muted);">Create screenings, send invites, and monitor RSVPs.</p>
+      <h1 style="margin-bottom: 0.6rem;">Admin-Übersicht</h1>
+      <p style="color: var(--muted);">Plane neue Abende, lade Freundinnen und Freunde ein und behalte die Zusagen im Blick.</p>
     </div>
-    <a class="btn" href="{{ url_for('admin_new_event') }}">New event</a>
+    <a class="btn" href="{{ url_for('admin_new_event') }}">Neues Event</a>
   </header>
 
   {% if events %}
     <div class="card-grid">
       {% for event in events %}
         <article class="card">
-          <div class="tag">{{ event.starts_at.strftime('%a %d %b · %I:%M %p') }}</div>
+          <div class="tag">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
           <h2 style="margin: 0;">{{ event.title }}</h2>
           <p style="color: var(--muted); margin: 0;">{{ event.location }}</p>
-          <p style="margin: 0.5rem 0 1rem;">Confirmed: {{ event.confirmed_invites()|length }} / {{ event.capacity }}</p>
-          <a class="btn btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Manage event</a>
+          <p style="margin: 0.5rem 0 1rem;">Zusagen: {{ event.confirmed_invites()|length }} / {{ event.capacity }}</p>
+          <a class="btn btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Event verwalten</a>
         </article>
       {% endfor %}
     </div>
   {% else %}
     <div class="card">
-      <p>No events yet. Start by creating one.</p>
-      <a class="btn" href="{{ url_for('admin_new_event') }}">Create your first event</a>
+      <p>Noch kein Event – leg gleich los und plane den ersten Abend.</p>
+      <a class="btn" href="{{ url_for('admin_new_event') }}">Event anlegen</a>
     </div>
   {% endif %}
 {% endblock %}

@@ -1,0 +1,48 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Event bearbeiten – Filmabende{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width: 720px; margin: 0 auto;">
+    <h1 style="margin-bottom: 1.5rem;">Event bearbeiten</h1>
+    <form method="post" action="{{ url_for('admin_edit_event', event_id=event.id) }}">
+      <div>
+        <label for="letterboxd_url">Letterboxd-Link</label>
+        <input id="letterboxd_url" name="letterboxd_url" type="url" value="{{ event.letterboxd_url }}" required>
+      </div>
+      <div>
+        <label for="title">Titel (optional)</label>
+        <input id="title" name="title" value="{{ event.title }}" placeholder="Wird automatisch von Letterboxd übernommen">
+      </div>
+      <div>
+        <label for="synopsis">Eigene Beschreibung (optional)</label>
+        <textarea id="synopsis" name="synopsis" rows="4" placeholder="Falls Letterboxd nichts Passendes liefert oder du persönliche Hinweise teilen möchtest.">{{ event.synopsis or '' }}</textarea>
+      </div>
+      <div>
+        <label for="poster_url">Poster-URL (optional)</label>
+        <input id="poster_url" name="poster_url" type="url" value="{{ event.poster_url or '' }}" placeholder="https://...">
+      </div>
+      <div>
+        <label for="starts_at">Start</label>
+        <input id="starts_at" name="starts_at" type="datetime-local" value="{{ event.starts_at.strftime('%Y-%m-%dT%H:%M') }}" required>
+      </div>
+      <div>
+        <label for="location">Ort</label>
+        <input id="location" name="location" value="{{ event.location }}" placeholder="Wohnzimmer, Kinoraum, etc." required>
+      </div>
+      <div>
+        <label for="capacity">Plätze</label>
+        <input id="capacity" name="capacity" type="number" min="1" step="1" value="{{ event.capacity }}" required>
+      </div>
+      <div>
+        <label for="notes">Hinweise für Gäste (optional)</label>
+        <textarea id="notes" name="notes" rows="3" placeholder="Snacks stehen bereit, bitte Hausschuhe mitbringen, ...">{{ event.notes or '' }}</textarea>
+      </div>
+      <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+        <button class="btn" type="submit">Änderungen speichern</button>
+        <a class="btn btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Abbrechen</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+

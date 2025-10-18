@@ -1,21 +1,21 @@
 ﻿<!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Movie Nights{% endblock %}</title>
+    <title>{% block title %}Filmabende{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
   <body>
     <div class="container">
       <nav class="navbar">
-        <a href="{{ url_for('index') }}" class="tag">Movie Nights</a>
+        <a href="{{ url_for('index') }}" class="tag">Heimkino Filmabende</a>
         <div>
           {% if session.get('is_admin') %}
-            <a class="btn btn-secondary" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-            <a class="btn btn-secondary" href="{{ url_for('admin_logout') }}">Sign out</a>
+            <a class="btn btn-secondary" href="{{ url_for('admin_dashboard') }}">Übersicht</a>
+            <a class="btn btn-secondary" href="{{ url_for('admin_logout') }}">Abmelden</a>
           {% else %}
-            <a class="btn btn-secondary" href="{{ url_for('admin_login') }}">Admin</a>
+            <a class="btn btn-secondary" href="{{ url_for('admin_login') }}">Adminbereich</a>
           {% endif %}
         </div>
       </nav>
@@ -31,9 +31,8 @@
       {% block content %}{% endblock %}
 
       <footer>
-        Curated screenings with friends. Built for quick RSVP tracking.
+        Persönliche Filmnächte mit vertrauten Gesichtern – mein Wohnzimmer wird zum Kino.
       </footer>
     </div>
   </body>
 </html>
-
