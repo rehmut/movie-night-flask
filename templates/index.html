@@ -4,9 +4,9 @@
 
 {% block content %}
   <header class="hero">
-    <h1 style="font-size: 2.8rem; margin-bottom: 0.6rem;">Die kalte Jahreszeit hat begonnen – lasst uns gemeinsam in meinem Heimkino Filme schauen.</h1>
+    <h1 style="font-size: 2.8rem; margin-bottom: 0.6rem;">Die kalte Jahreszeit hat begonnen – Zeit für Kino</h1>
     <p style="color: var(--muted); max-width: 620px;">
-      Ein kleiner Freundeskreis, Snacks, warme Decken und handverlesene Filme. Ich freue mich auf gemütliche Abende mit euch.
+      Ich plane etwa einmal im Monat einen kleinen Kinoabend. Wenn ihr Interesse habt mitzugucken oder eine Filmidee habt, könnt ihr sie auf der Website vermerken.
     </p>
   </header>
 
@@ -17,10 +17,10 @@
         {% for event in events %}
           <article class="card">
             {% if event.poster_url %}
-              <img src="{{ event.poster_url }}" alt="Filmplakat zu {{ event.title }}" style="width: 220px; height: 320px; object-fit: cover; border-radius: 18px; align-self: center;">
+              <img src="{{ event.poster_url }}" alt="Filmplakat zu {{ event.title }}" style="width: 100%; height: auto; object-fit: cover; border-top-left-radius: 18px; border-top-right-radius: 18px;">
             {% endif %}
             <div class="tag" style="margin-bottom: 0.6rem;">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
-            <h3 style="margin: 0 0 0.4rem; font-size: 1.5rem;">{{ event.title }}</h3>
+            <h3 class="movie-title" style="margin: 0 0 0.4rem; font-size: 1.5rem;">{{ event.title }}</h3>
             <p style="color: var(--muted); margin: 0 0 0.7rem;">{{ event.location }}</p>
             {% if event.synopsis %}
               <p style="font-size: 0.95rem; color: var(--muted);">{{ event.synopsis }}</p>
@@ -32,13 +32,41 @@
                 Ausgebucht – Warteliste {{ event.waitlisted_invites()|length }}
               {% endif %}
             </p>
-            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: auto;">
               <a class="btn" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
+              <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#request-invite-{{ event.id }}">
+                Einladung anfragen
+              </button>
               {% if session.get('is_admin') %}
                 <a class="btn btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Verwalten</a>
               {% endif %}
             </div>
           </article>
+
+          <!-- Modal -->
+          <div class="modal fade" id="request-invite-{{ event.id }}" tabindex="-1" aria-labelledby="request-invite-label-{{ event.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="request-invite-label-{{ event.id }}">Einladung für "{{ event.title }}" anfragen</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <form method="post" action="{{ url_for('request_invite', event_id=event.id) }}">
+                    <div class="mb-3">
+                      <label for="name" class="form-label">Dein Name</label>
+                      <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="email" class="form-label">Deine E-Mail</label>
+                      <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Anfrage senden</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
         {% endfor %}
       </div>
     {% else %}

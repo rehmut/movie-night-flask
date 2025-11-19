@@ -26,6 +26,45 @@
   </section>
 
   <section class="card" style="margin-bottom: 2rem;">
+    <h2 style="margin-top: 0;">Einladungsanfragen</h2>
+    {% if event.requested_invites() %}
+      <div style="overflow-x: auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>E-Mail</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invite in event.requested_invites() %}
+              <tr>
+                <td>{{ invite.name }}</td>
+                <td style="color: var(--muted);">{{ invite.email }}</td>
+                <td>
+                  <form action="{{ url_for('admin_approve_invite', invite_id=invite.id) }}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-success">
+                      <i class="bi bi-check-lg"></i> Genehmigen
+                    </button>
+                  </form>
+                  <form action="{{ url_for('admin_reject_invite', invite_id=invite.id) }}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-danger">
+                      <i class="bi bi-x-lg"></i> Ablehnen
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--muted);">Keine neuen Einladungsanfragen.</p>
+    {% endif %}
+  </section>
+
+  <section class="card" style="margin-bottom: 2rem;">
     <h2 style="margin-top: 0;">Gäste einladen</h2>
     <p style="color: var(--muted);">Eine E-Mail pro Zeile (oder kommasepariert). Namen optional Zeile für Zeile zuordnen.</p>
     <form method="post" action="{{ url_for('admin_add_invites', event_id=event.id) }}">
@@ -55,23 +94,25 @@
               <th>Link</th>
             </tr>
           </thead>
-          {% set status_map = {'yes': 'Zusage', 'waitlist': 'Warteliste', 'no': 'Absage', 'pending': 'Offen'} %}
+          {% set status_map = {'yes': 'Zusage', 'waitlist': 'Warteliste', 'no': 'Absage', 'pending': 'Offen', 'requested': 'Angevraagd'} %}
           <tbody>
             {% for invite in event.invites %}
-              <tr>
-                <td>{{ invite.display_name() }}</td>
-                <td style="color: var(--muted);">{{ invite.email }}</td>
-                <td>
-                  <span class="badge {{ invite.status }}">{{ status_map.get(invite.status, invite.status) }}</span>
-                  {% if invite.responded_at %}
-                    <div style="font-size: 0.7rem; color: var(--muted);">{{ invite.responded_at.strftime('%d.%m.%Y %H:%M') }}</div>
-                  {% endif %}
-                </td>
-                <td>{{ invite.seat_number or '-' }}</td>
-                <td style="font-size: 0.75rem;">
-                  <a href="{{ invite_links[invite.id] }}" target="_blank" rel="noreferrer">Link öffnen</a>
-                </td>
-              </tr>
+              {% if invite.status != 'requested' %}
+                <tr>
+                  <td>{{ invite.display_name() }}</td>
+                  <td style="color: var(--muted);">{{ invite.email }}</td>
+                  <td>
+                    <span class="badge {{ invite.status }}">{{ status_map.get(invite.status, invite.status) }}</span>
+                    {% if invite.responded_at %}
+                      <div style="font-size: 0.7rem; color: var(--muted);">{{ invite.responded_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                    {% endif %}
+                  </td>
+                  <td>{{ invite.seat_number or '-' }}</td>
+                  <td style="font-size: 0.75rem;">
+                    <a href="{{ invite_links[invite.id] }}" target="_blank" rel="noreferrer">Link öffnen</a>
+                  </td>
+                </tr>
+              {% endif %}
             {% endfor %}
           </tbody>
         </table>

@@ -263,3 +263,10 @@ footer {
     fill: currentColor;
 }
 
+.movie-title {
+    font-size: 1.8rem !important;
+    font-weight: 700;
+    color: var(--text);
+}
+
+

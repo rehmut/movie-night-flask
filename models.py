@@ -39,6 +39,9 @@ class Event(db.Model):
     def declined_invites(self):
         return [invite for invite in self.invites if invite.status == "no"]
 
+    def requested_invites(self):
+        return [invite for invite in self.invites if invite.status == "requested"]
+
     def available_seats(self) -> int:
         return max(self.capacity - len(self.confirmed_invites()), 0)
 
@@ -64,6 +67,9 @@ class Invite(db.Model):
     def is_waitlisted(self) -> bool:
         return self.status == "waitlist"
 
+    def is_requested(self) -> bool:
+        return self.status == "requested"
+
     def display_name(self) -> str:
         return self.name or self.email
 
@@ -79,8 +85,7 @@ class MovieRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
     letterboxd_url = db.Column(db.String(512))
-    requester_name = db.Column(db.String(255), nullable=False)
-    requester_email = db.Column(db.String(255), nullable=False)
+    poster_url = db.Column(db.String(512))
     status = db.Column(db.String(20), nullable=False, default="pending")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 

@@ -364,6 +364,52 @@ def create_app() -> Flask:
         response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
 
+    @app.post("/events/<int:event_id>/request-invite")
+    def request_invite(event_id: int):
+        event = Event.query.get_or_404(event_id)
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+
+        if not name or not email:
+            flash("Bitte fülle alle Pflichtfelder aus.", "warning")
+            return redirect(url_for("invite", token=event.invites[0].token if event.invites else ""))
+
+        existing_invite = Invite.query.filter_by(event_id=event.id, email=email).first()
+        if existing_invite:
+            flash("Du hast bereits eine Einladung für dieses Event angefordert oder erhalten.", "info")
+            return redirect(url_for("index"))
+
+        invite = Invite(
+            event=event,
+            email=email,
+            name=name,
+            token=generate_token(),
+            status="requested",
+        )
+        db.session.add(invite)
+        db.session.commit()
+
+        flash("Deine Einladungsanfrage wurde übermittelt.", "success")
+        return redirect(url_for("index"))
+
+    @app.post("/admin/invites/<int:invite_id>/approve")
+    @login_required
+    def admin_approve_invite(invite_id: int):
+        invite = Invite.query.get_or_404(invite_id)
+        invite.status = "pending"
+        db.session.commit()
+        flash("Einladungsanfrage genehmigt.", "success")
+        return redirect(url_for("admin_event_detail", event_id=invite.event_id))
+
+    @app.post("/admin/invites/<int:invite_id>/reject")
+    @login_required
+    def admin_reject_invite(invite_id: int):
+        invite = Invite.query.get_or_404(invite_id)
+        db.session.delete(invite)
+        db.session.commit()
+        flash("Einladungsanfrage abgelehnt.", "info")
+        return redirect(url_for("admin_event_detail", event_id=invite.event_id))
+
     @app.route("/invite/<token>", methods=["GET", "POST"])
     def invite(token: str):
         invite = Invite.query.filter_by(token=token).first()
@@ -429,18 +475,27 @@ def create_app() -> Flask:
         if request.method == "POST":
             title = request.form.get("title", "").strip()
             letterboxd_url = request.form.get("letterboxd_url", "").strip()
-            requester_name = request.form.get("requester_name", "").strip()
-            requester_email = request.form.get("requester_email", "").strip()
 
-            if not title or not requester_name or not requester_email:
+            if not title:
                 flash("Bitte fülle alle Pflichtfelder aus.", "warning")
                 return redirect(url_for("movie_requests"))
+
+            poster_url = None
+            if letterboxd_url:
+                try:
+                    normalized_url, metadata, warning = resolve_letterboxd_metadata(letterboxd_url)
+                    if warning:
+                        flash(warning, "warning")
+                    title = metadata.get("title") or title
+                    poster_url = metadata.get("poster_url")
+                    letterboxd_url = normalized_url
+                except LetterboxdError as e:
+                    flash(str(e), "danger")
 
             movie_request = MovieRequest(
                 title=title,
                 letterboxd_url=letterboxd_url,
-                requester_name=requester_name,
-                requester_email=requester_email,
+                poster_url=poster_url,
             )
             db.session.add(movie_request)
             db.session.commit()

@@ -13,7 +13,6 @@
                 <thead>
                     <tr>
                         <th>Titel</th>
-                        <th>Vorgeschlagen von</th>
                         <th>Eingereicht am</th>
                         <th>Status</th>
                         <th>Aktionen</th>
@@ -23,14 +22,14 @@
                     {% for req in requests %}
                         <tr>
                             <td>
+                                {% if req.poster_url %}
+                                    <img src="{{ req.poster_url }}" alt="{{ req.title }}" width="50" class="me-3">
+                                {% endif %}
                                 {% if req.letterboxd_url %}
                                     <a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>
                                 {% else %}
                                     {{ req.title }}
                                 {% endif %}
-                            </td>
-                            <td>
-                                <a href="mailto:{{ req.requester_email }}">{{ req.requester_name }}</a>
                             </td>
                             <td>{{ req.created_at.strftime('%d.%m.%Y') }}</td>
                             <td>
