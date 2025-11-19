@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Filmwünsche{% endblock %}
+
+{% block content %}
+<div class="container content-container">
+    <h1>Filmwünsche</h1>
+    <p class="lead">Hier kannst du sehen, welche Filme bereits vorgeschlagen wurden, und deine eigenen Wünsche einreichen.</p>
+
+    <div class="card bg-dark text-white mb-4">
+        <div class="card-header">
+            <h2 class="card-title mb-0">Neuen Film vorschlagen</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('movie_requests') }}">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Filmtitel</label>
+                    <input type="text" id="title" name="title" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="letterboxd_url" class="form-label">Letterboxd-URL (optional)</label>
+                    <input type="url" id="letterboxd_url" name="letterboxd_url" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="requester_name" class="form-label">Dein Name</label>
+                        <input type="text" id="requester_name" name="requester_name" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="requester_email" class="form-label">Deine E-Mail</label>
+                        <input type="email" id="requester_email" name="requester_email" class="form-control" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Wunsch einreichen</button>
+            </form>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h2>Bestehende Wünsche</h2>
+    {% if requests %}
+        <table class="table table-dark table-striped">
+            <thead>
+                <tr>
+                    <th>Titel</th>
+                    <th>Vorgeschlagen von</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                    <tr>
+                        <td>
+                            {% if req.letterboxd_url %}
+                                <a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>
+                            {% else %}
+                                {{ req.title }}
+                            {% endif %}
+                        </td>
+                        <td>{{ req.requester_name }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if req.status == 'approved' %}bg-success
+                                {% elif req.status == 'rejected' %}bg-danger
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ req.status|capitalize }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Noch keine Filmwünsche vorhanden.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -23,7 +23,7 @@ from flask import (
 
 from config import Config
 from letterboxd import LetterboxdError, fetch_metadata, normalize_letterboxd_url
-from models import Event, Invite, db
+from models import Event, Invite, db, MovieRequest
 
 
 def create_app() -> Flask:
@@ -138,7 +138,8 @@ def create_app() -> Flask:
     @login_required
     def admin_dashboard():
         events = Event.query.order_by(Event.starts_at.desc()).all()
-        return render_template("admin_dashboard.html", events=events)
+        requests = MovieRequest.query.order_by(MovieRequest.created_at.desc()).all()
+        return render_template("admin_dashboard.html", events=events, requests=requests)
 
     @app.route("/admin/events/new", methods=["GET", "POST"])
     @login_required
@@ -422,6 +423,57 @@ def create_app() -> Flask:
             confirmed_count=confirmed_count,
             seats_remaining=event.available_seats(),
         )
+
+    @app.route("/requests", methods=["GET", "POST"])
+    def movie_requests():
+        if request.method == "POST":
+            title = request.form.get("title", "").strip()
+            letterboxd_url = request.form.get("letterboxd_url", "").strip()
+            requester_name = request.form.get("requester_name", "").strip()
+            requester_email = request.form.get("requester_email", "").strip()
+
+            if not title or not requester_name or not requester_email:
+                flash("Bitte fülle alle Pflichtfelder aus.", "warning")
+                return redirect(url_for("movie_requests"))
+
+            movie_request = MovieRequest(
+                title=title,
+                letterboxd_url=letterboxd_url,
+                requester_name=requester_name,
+                requester_email=requester_email,
+            )
+            db.session.add(movie_request)
+            db.session.commit()
+
+            flash("Dein Filmwunsch wurde übermittelt.", "success")
+            return redirect(url_for("movie_requests"))
+
+        requests = MovieRequest.query.order_by(MovieRequest.created_at.desc()).all()
+        return render_template("requests.html", requests=requests, is_admin=is_admin())
+
+    @app.route("/admin/requests")
+    @login_required
+    def admin_requests():
+        requests = MovieRequest.query.order_by(MovieRequest.created_at.desc()).all()
+        return render_template("admin_requests.html", requests=requests)
+
+    @app.post("/admin/requests/<int:request_id>/approve")
+    @login_required
+    def admin_approve_request(request_id: int):
+        movie_request = MovieRequest.query.get_or_404(request_id)
+        movie_request.status = "approved"
+        db.session.commit()
+        flash("Filmwunsch genehmigt.", "success")
+        return redirect(url_for("admin_requests"))
+
+    @app.post("/admin/requests/<int:request_id>/reject")
+    @login_required
+    def admin_reject_request(request_id: int):
+        movie_request = MovieRequest.query.get_or_404(request_id)
+        movie_request.status = "rejected"
+        db.session.commit()
+        flash("Filmwunsch abgelehnt.", "info")
+        return redirect(url_for("admin_requests"))
 
     @app.errorhandler(404)
     def not_found(_: Exception):

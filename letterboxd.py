@@ -53,6 +53,13 @@ def fetch_metadata(letterboxd_url: str) -> Dict[str, str]:
     for name, content in matches:
         data[name.lower()] = content
 
+    if not data.get("title"):
+        title_match = re.search(r"<title>(?P<title>.*?)</title>", html, re.IGNORECASE)
+        if title_match:
+            # Clean up the title from Letterboxd's format
+            title = title_match.group("title").replace(" – Letterboxd", "").strip()
+            data["title"] = title
+
     return {
         "title": data.get("title"),
         "synopsis": data.get("description"),

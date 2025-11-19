@@ -72,3 +72,15 @@ class Invite(db.Model):
         self.seat_number = seat_number
         self.responded_at = datetime.utcnow()
 
+
+class MovieRequest(db.Model):
+    __tablename__ = "movie_requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    letterboxd_url = db.Column(db.String(512))
+    requester_name = db.Column(db.String(255), nullable=False)
+    requester_email = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="pending")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
