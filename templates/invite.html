@@ -5,7 +5,7 @@
 {% block content %}
   <section class="card" style="max-width: 720px; margin: 0 auto 2rem;">
     <div class="tag">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
-    <h1 style="margin: 0.6rem 0 0.5rem;">{{ event.title }}</h1>
+    <h1 class="movie-title" style="margin: 0.6rem 0 0.5rem;">{{ event.title }}</h1>
     <p style="color: var(--muted); margin: 0 0 0.6rem;">{{ event.location }}</p>
     {% if event.poster_url %}
       <img src="{{ event.poster_url }}" alt="Poster" style="width: 100%; max-height: 360px; object-fit: cover; border-radius: 16px; margin-bottom: 1rem;">

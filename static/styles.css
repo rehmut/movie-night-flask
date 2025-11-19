@@ -269,4 +269,10 @@ footer {
     color: var(--text);
 }
 
+.section-title {
+    font-size: 1.8rem !important;
+    font-weight: 700;
+    color: var(--text);
+}
+
 
