@@ -20,7 +20,9 @@ def _build_database_url(raw_url: str | None) -> str:
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
-    SQLALCHEMY_DATABASE_URI = _build_database_url(os.environ.get("DATABASE_URL"))
+    SQLALCHEMY_DATABASE_URI = _build_database_url(
+        os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "movienight")
     LETTERBOXD_TIMEOUT = float(os.environ.get("LETTERBOXD_TIMEOUT", "8"))
