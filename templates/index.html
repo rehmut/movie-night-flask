@@ -32,6 +32,20 @@
                 Ausgebucht – Warteliste {{ event.waitlisted_invites()|length }}
               {% endif %}
             </p>
+
+            {% if event.confirmed_invites() %}
+              <div style="margin: 0.5rem 0 1rem;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.3rem;">Gäste:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                  {% for invite in event.confirmed_invites() %}
+                    <span style="font-size: 0.85rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(255, 255, 255, 0.1); color: var(--text);">
+                      {{ invite.display_name() }}
+                    </span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
             <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: auto;">
               <a class="btn" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
               <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#request-invite-{{ event.id }}">
