@@ -368,28 +368,46 @@ def create_app() -> Flask:
     def request_invite(event_id: int):
         event = Event.query.get_or_404(event_id)
         name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip()
 
-        if not name or not email:
-            flash("Bitte fülle alle Pflichtfelder aus.", "warning")
-            return redirect(url_for("invite", token=event.invites[0].token if event.invites else ""))
-
-        existing_invite = Invite.query.filter_by(event_id=event.id, email=email).first()
-        if existing_invite:
-            flash("Du hast bereits eine Einladung für dieses Event angefordert oder erhalten.", "info")
+        if not name:
+            flash("Bitte gib deinen Namen an.", "warning")
             return redirect(url_for("index"))
+
+        # Check for existing invite by name (since email is gone)
+        existing_invite = Invite.query.filter_by(event_id=event.id, name=name).first()
+        if existing_invite:
+            flash("Du hast bereits einen Platz reserviert.", "info")
+            return redirect(url_for("index"))
+
+        # Logic: Max 6 people. If < 6 confirmed, auto-accept. Else waitlist.
+        confirmed_count = len(event.confirmed_invites())
+        limit = 6
+
+        if confirmed_count < limit:
+            status = "yes"
+            seat = next_seat_number(event)
+            message = f"Platz reserviert! Du sitzt auf Platz {seat}."
+        else:
+            status = "waitlist"
+            seat = None
+            message = "Event ist voll. Du stehst auf der Warteliste."
+
+        # Generate a fake email to satisfy DB constraint if column is not nullable
+        fake_email = f"{secrets.token_hex(8)}@placeholder.local"
 
         invite = Invite(
             event=event,
-            email=email,
+            email=fake_email,
             name=name,
             token=generate_token(),
-            status="requested",
+            status=status,
+            seat_number=seat,
+            responded_at=datetime.utcnow() if status == "yes" else None,
         )
         db.session.add(invite)
         db.session.commit()
 
-        flash("Deine Einladungsanfrage wurde übermittelt.", "success")
+        flash(message, "success")
         return redirect(url_for("index"))
 
     @app.post("/admin/invites/<int:invite_id>/approve")
