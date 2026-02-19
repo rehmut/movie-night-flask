@@ -34,7 +34,18 @@ def normalize_letterboxd_url(url: str) -> str:
 def fetch_metadata(letterboxd_url: str) -> Dict[str, str]:
     normalized = normalize_letterboxd_url(letterboxd_url)
     timeout = current_app.config["LETTERBOXD_TIMEOUT"]
-    headers = {"User-Agent": current_app.config["LETTERBOXD_USER_AGENT"]}
+    headers = {
+        "User-Agent": current_app.config["LETTERBOXD_USER_AGENT"],
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "DNT": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+    }
 
     try:
         response = requests.get(normalized, timeout=timeout, headers=headers)
