@@ -622,22 +622,29 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 
 /* ---- Modals (Bootstrap override) ---- */
 .modal-content {
-  background: var(--surface) !important;
-  border: 1px solid var(--border-strong) !important;
+  background: #252529 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: var(--radius-lg) !important;
   color: var(--text) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7) !important;
 }
 .modal-header {
-  border-bottom-color: var(--border) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   padding: 1.3rem 1.5rem;
 }
 .modal-title {
   font-family: var(--font-display) !important;
   font-size: 1.15rem !important;
+  font-weight: 700 !important;
 }
 .modal-body { padding: 1.5rem; }
+.modal-body .form-control,
+.modal-body input {
+  background: #1a1a1e !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
 .btn-close-white { filter: invert(0.7); }
-.modal-backdrop.show { opacity: 0.8 !important; }
+.modal-backdrop.show { opacity: 0.85 !important; background-color: #000 !important; }
 
 /* ---- Footer ---- */
 footer {
