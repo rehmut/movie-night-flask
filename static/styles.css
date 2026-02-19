@@ -88,7 +88,7 @@ body::after {
   height: 60vh;
   background: radial-gradient(ellipse at center, rgba(224, 145, 69, 0.04) 0%, transparent 70%);
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
 }
 
 a { color: var(--amber); text-decoration: none; transition: color var(--transition); }
@@ -101,8 +101,6 @@ img { max-width: 100%; display: block; }
   max-width: 1020px;
   margin: 0 auto;
   padding: 0 1.5rem 4rem;
-  position: relative;
-  z-index: 1;
 }
 
 /* ---- Deco Line (top accent) ---- */
