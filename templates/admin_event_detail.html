@@ -1,34 +1,38 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}{{ event.title }} verwalten – Filmabende{% endblock %}
 
 {% block content %}
-  <section class="card" style="margin-bottom: 2rem;">
-    <div class="tag">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
-    <h1 class="movie-title" style="margin: 0.6rem 0 0.4rem;">{{ event.title }}</h1>
-    <p style="color: var(--muted); margin: 0 0 0.6rem;">{{ event.location }}</p>
+  <section class="panel" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+      <div>
+        <div class="tag" style="margin-bottom: 0.6rem;">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
+        <h1 class="movie-title" style="font-size: 2rem;">{{ event.title }}</h1>
+        <p style="color: var(--text-secondary); margin-top: 0.3rem;">{{ event.location }}</p>
+      </div>
+      <a class="btn btn-secondary btn-sm" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
+    </div>
     {% if event.notes %}
-      <p style="margin: 0 0 1rem;">{{ event.notes }}</p>
+      <p style="color: var(--text-secondary); margin-bottom: 1rem;">{{ event.notes }}</p>
     {% endif %}
-    <div style="display: flex; gap: 1.2rem; flex-wrap: wrap;">
+    <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1rem;">
       <span class="badge yes">Zusagen {{ event.confirmed_invites()|length }} / {{ event.capacity }}</span>
       <span class="badge waitlist">Warteliste {{ event.waitlisted_invites()|length }}</span>
-      <span class="badge">Absagen {{ event.declined_invites()|length }}</span>
-      <a class="btn btn-secondary" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
+      <span class="badge no">Absagen {{ event.declined_invites()|length }}</span>
     </div>
-    <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1rem;">
-      <a class="btn btn-secondary" href="{{ url_for('admin_edit_event', event_id=event.id) }}">Event bearbeiten</a>
-      <a class="btn btn-secondary" href="{{ url_for('admin_export_invites', event_id=event.id) }}">Einladungen exportieren</a>
+    <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+      <a class="btn btn-secondary btn-sm" href="{{ url_for('admin_edit_event', event_id=event.id) }}">Event bearbeiten</a>
+      <a class="btn btn-secondary btn-sm" href="{{ url_for('admin_export_invites', event_id=event.id) }}">Exportieren</a>
       <form method="post" action="{{ url_for('admin_delete_event', event_id=event.id) }}" style="display: inline;" onsubmit="return confirm('Event wirklich löschen? Dieser Schritt kann nicht rückgängig gemacht werden.');">
-        <button class="btn btn-secondary" type="submit" style="border-color: rgba(248, 113, 113, 0.4); color: var(--danger);">Event löschen</button>
+        <button class="btn btn-danger btn-sm" type="submit">Löschen</button>
       </form>
     </div>
   </section>
 
-  <section class="card" style="margin-bottom: 2rem;">
-    <h2 style="margin-top: 0;">Einladungsanfragen</h2>
+  <section class="panel" style="margin-bottom: 1.5rem;">
+    <h2 style="margin-bottom: 1rem;">Einladungsanfragen</h2>
     {% if event.requested_invites() %}
-      <div style="overflow-x: auto;">
+      <div class="table-responsive">
         <table class="table">
           <thead>
             <tr>
@@ -41,17 +45,13 @@
             {% for invite in event.requested_invites() %}
               <tr>
                 <td>{{ invite.name }}</td>
-                <td style="color: var(--muted);">{{ invite.email }}</td>
+                <td style="color: var(--text-muted);">{{ invite.email }}</td>
                 <td>
                   <form action="{{ url_for('admin_approve_invite', invite_id=invite.id) }}" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-sm btn-success">
-                      <i class="bi bi-check-lg"></i> Genehmigen
-                    </button>
+                    <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>
                   </form>
                   <form action="{{ url_for('admin_reject_invite', invite_id=invite.id) }}" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-sm btn-danger">
-                      <i class="bi bi-x-lg"></i> Ablehnen
-                    </button>
+                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i></button>
                   </form>
                 </td>
               </tr>
@@ -60,19 +60,19 @@
         </table>
       </div>
     {% else %}
-      <p style="color: var(--muted);">Keine neuen Einladungsanfragen.</p>
+      <p style="color: var(--text-muted);">Keine neuen Einladungsanfragen.</p>
     {% endif %}
   </section>
 
-  <section class="card" style="margin-bottom: 2rem;">
-    <h2 style="margin-top: 0;">Gäste einladen</h2>
-    <p style="color: var(--muted);">Eine E-Mail pro Zeile (oder kommasepariert). Namen optional Zeile für Zeile zuordnen.</p>
+  <section class="panel" style="margin-bottom: 1.5rem;">
+    <h2 style="margin-bottom: 1rem;">Gäste einladen</h2>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">Eine E-Mail pro Zeile (oder kommasepariert). Namen optional Zeile für Zeile zuordnen.</p>
     <form method="post" action="{{ url_for('admin_add_invites', event_id=event.id) }}">
-      <div>
+      <div class="form-group">
         <label for="emails">E-Mails</label>
         <textarea id="emails" name="emails" rows="4" placeholder="gast@example.com"></textarea>
       </div>
-      <div>
+      <div class="form-group">
         <label for="names">Namen (optional)</label>
         <textarea id="names" name="names" rows="4" placeholder="Name passend zur Reihenfolge der E-Mails"></textarea>
       </div>
@@ -80,10 +80,10 @@
     </form>
   </section>
 
-  <section class="card">
-    <h2 style="margin-top: 0;">Einladungsübersicht</h2>
+  <section class="panel">
+    <h2 style="margin-bottom: 1rem;">Einladungsübersicht</h2>
     {% if event.invites %}
-      <div style="overflow-x: auto;">
+      <div class="table-responsive">
         <table class="table">
           <thead>
             <tr>
@@ -100,11 +100,11 @@
               {% if invite.status != 'requested' %}
                 <tr>
                   <td>{{ invite.display_name() }}</td>
-                  <td style="color: var(--muted);">{{ invite.email }}</td>
+                  <td style="color: var(--text-muted);">{{ invite.email }}</td>
                   <td>
                     <span class="badge {{ invite.status }}">{{ status_map.get(invite.status, invite.status) }}</span>
                     {% if invite.responded_at %}
-                      <div style="font-size: 0.7rem; color: var(--muted);">{{ invite.responded_at.strftime('%d.%m.%Y %H:%M') }}</div>
+                      <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem;">{{ invite.responded_at.strftime('%d.%m.%Y %H:%M') }}</div>
                     {% endif %}
                   </td>
                   <td>{{ invite.seat_number or '-' }}</td>
@@ -118,8 +118,7 @@
         </table>
       </div>
     {% else %}
-      <p style="color: var(--muted);">Noch keine Einladungen.</p>
+      <p style="color: var(--text-muted);">Noch keine Einladungen.</p>
     {% endif %}
   </section>
 {% endblock %}
-

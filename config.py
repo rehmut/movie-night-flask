@@ -28,5 +28,5 @@ class Config:
     LETTERBOXD_TIMEOUT = float(os.environ.get("LETTERBOXD_TIMEOUT", "8"))
     LETTERBOXD_USER_AGENT = os.environ.get(
         "LETTERBOXD_USER_AGENT",
-        "Mozilla/5.0 (compatible; MovieNightBot/1.0)",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     )

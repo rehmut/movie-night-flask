@@ -1,69 +1,58 @@
-{% extends "base.html" %}
-
-{% block title %}Filmwünsche verwalten{% endblock %}
-
-{% block content %}
-<div class="container content-container">
-    <h1>Filmwünsche verwalten</h1>
-    <p class="lead">Hier kannst du alle eingereichten Filmwünsche einsehen und bearbeiten.</p>
-
-    {% if requests %}
-        <div class="table-responsive">
-            <table class="table table-dark table-striped">
-                <thead>
-                    <tr>
-                        <th>Titel</th>
-                        <th>Eingereicht am</th>
-                        <th>Status</th>
-                        <th>Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for req in requests %}
-                        <tr>
-                            <td>
-                                {% if req.poster_url %}
-                                    <img src="{{ req.poster_url }}" alt="{{ req.title }}" width="50" class="me-3">
-                                {% endif %}
-                                {% if req.letterboxd_url %}
-                                    <a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>
-                                {% else %}
-                                    {{ req.title }}
-                                {% endif %}
-                            </td>
-                            <td>{{ req.created_at.strftime('%d.%m.%Y') }}</td>
-                            <td>
-                                <span class="badge 
-                                    {% if req.status == 'approved' %}bg-success
-                                    {% elif req.status == 'rejected' %}bg-danger
-                                    {% else %}bg-secondary
-                                    {% endif %}">
-                                    {{ req.status|capitalize }}
-                                </span>
-                            </td>
-                            <td>
-                                {% if req.status == 'pending' %}
-                                    <form action="{{ url_for('admin_approve_request', request_id=req.id) }}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            <i class="bi bi-check-lg"></i> Genehmigen
-                                        </button>
-                                    </form>
-                                    <form action="{{ url_for('admin_reject_request', request_id=req.id) }}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-danger">
-                                            <i class="bi bi-x-lg"></i> Ablehnen
-                                        </button>
-                                    </form>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-dark" role="alert">
-            Keine Filmwünsche vorhanden.
-        </div>
-    {% endif %}
-</div>
-{% endblock %}
+{% if requests %}
+  <div class="table-responsive mt-4">
+    <table class="table table-dark table-striped">
+      <thead>
+        <tr>
+          <th>Titel</th>
+          <th>Eingereicht am</th>
+          <th>Status</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in requests %}
+          <tr>
+            <td>
+              {% if req.poster_url %}
+                <img src="{{ req.poster_url }}" alt="{{ req.title }}" width="40" style="border-radius: 4px; vertical-align: middle; margin-right: 0.6rem;">
+              {% endif %}
+              {% if req.letterboxd_url %}
+                <a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>
+              {% else %}
+                {{ req.title }}
+              {% endif %}
+            </td>
+            <td>{{ req.created_at.strftime('%d.%m.%Y') }}</td>
+            <td>
+              <span class="badge
+                {% if req.status == 'approved' %}yes
+                {% elif req.status == 'rejected' %}no
+                {% else %}pending
+                {% endif %}">
+                {{ req.status|capitalize }}
+              </span>
+            </td>
+            <td>
+              {% if req.status == 'pending' %}
+                <form action="{{ url_for('admin_approve_request', request_id=req.id) }}" method="post" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-success">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                </form>
+                <form action="{{ url_for('admin_reject_request', request_id=req.id) }}" method="post" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-danger">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+    Keine Filmwünsche vorhanden.
+  </div>
+{% endif %}

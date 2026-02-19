@@ -3,64 +3,63 @@
 {% block title %}Filmwünsche{% endblock %}
 
 {% block content %}
-<div class="container content-container">
+  <header style="margin-bottom: 2.5rem;">
+    <div class="section-label">Community</div>
     <h1>Filmwünsche</h1>
-    <p class="lead">Hier kannst du sehen, welche Filme bereits vorgeschlagen wurden, und deine eigenen Wünsche einreichen.</p>
+    <p style="color: var(--text-secondary); margin-top: 0.6rem;">
+      Hier kannst du sehen, welche Filme bereits vorgeschlagen wurden, und deine eigenen Wünsche einreichen.
+    </p>
+  </header>
 
-    <div class="card bg-dark text-white mb-4">
-        <div class="card-header">
-            <h2 class="card-title mb-0">Neuen Film vorschlagen</h2>
-        </div>
-        <div class="card-body">
-            <form method="post" action="{{ url_for('movie_requests') }}">
-                <div class="mb-3">
-                    <label for="title" class="form-label">Filmtitel</label>
-                    <input type="text" id="title" name="title" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label for="letterboxd_url" class="form-label">Letterboxd-URL (optional)</label>
-                    <input type="url" id="letterboxd_url" name="letterboxd_url" class="form-control">
-                </div>
-                <button type="submit" class="btn btn-primary">Wunsch einreichen</button>
-            </form>
-        </div>
-    </div>
+  <section class="panel" style="margin-bottom: 2.5rem;">
+    <h2 style="margin-bottom: 1.2rem;">Neuen Film vorschlagen</h2>
+    <form method="post" action="{{ url_for('movie_requests') }}">
+      <div class="form-group">
+        <label for="title">Filmtitel</label>
+        <input type="text" id="title" name="title" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label for="letterboxd_url">Letterboxd-URL (optional)</label>
+        <input type="url" id="letterboxd_url" name="letterboxd_url" class="form-control">
+      </div>
+      <button type="submit" class="btn">Wunsch einreichen</button>
+    </form>
+  </section>
 
-    <hr class="my-4">
-
-    <h2>Bestehende Wünsche</h2>
+  <section>
+    <div class="section-label">Bestehende Wünsche</div>
     {% if requests %}
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            {% for req in requests %}
-                <div class="col">
-                    <div class="card h-100 bg-dark text-white">
-                        {% if req.poster_url %}
-                            <img src="{{ req.poster_url }}" class="card-img-top" alt="{{ req.title }}">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                {% if req.letterboxd_url %}
-                                    <a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>
-                                {% else %}
-                                    {{ req.title }}
-                                {% endif %}
-                            </h5>
-                        </div>
-                        <div class="card-footer">
-                            <span class="badge 
-                                {% if req.status == 'approved' %}bg-success
-                                {% elif req.status == 'rejected' %}bg-danger
-                                {% else %}bg-secondary
-                                {% endif %}">
-                                {{ req.status|capitalize }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+      <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for req in requests %}
+          <div class="col">
+            <div class="card h-100">
+              {% if req.poster_url %}
+                <img src="{{ req.poster_url }}" class="card-img-top" alt="{{ req.title }}">
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title">
+                  {% if req.letterboxd_url %}
+                    <a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>
+                  {% else %}
+                    {{ req.title }}
+                  {% endif %}
+                </h5>
+              </div>
+              <div class="card-footer">
+                <span class="badge
+                  {% if req.status == 'approved' %}yes
+                  {% elif req.status == 'rejected' %}no
+                  {% else %}pending
+                  {% endif %}">
+                  {{ req.status|capitalize }}
+                </span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
     {% else %}
-        <p>Noch keine Filmwünsche vorhanden.</p>
+      <p style="color: var(--text-muted);">Noch keine Filmwünsche vorhanden.</p>
     {% endif %}
-</div>
+  </section>
 {% endblock %}

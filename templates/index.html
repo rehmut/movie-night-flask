@@ -1,77 +1,78 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Filmabende{% endblock %}
 
 {% block content %}
   <header class="hero">
-    <h1 style="font-size: 2.8rem; margin-bottom: 0.6rem;">Die kalte Jahreszeit hat begonnen – Zeit für Kino</h1>
-    <p style="color: var(--muted); max-width: 620px;">
+    <h1>Kino <em>Kirchner</em></h1>
+    <p class="hero-subtitle">
       Ich plane etwa einmal im Monat einen kleinen Kinoabend. Wenn ihr Interesse habt mitzugucken oder eine Filmidee habt, könnt ihr sie auf der Website vermerken.
     </p>
+    <div class="hero-deco">Filmabende</div>
   </header>
 
-  <section style="margin-bottom: 3rem;">
-    <h2 class="tag" style="margin-bottom: 1.5rem;">Bevorstehende Abende</h2>
+  <section style="margin-bottom: 3.5rem;">
+    <div class="section-label">Bevorstehende Abende</div>
     {% if events %}
       <div class="card-grid">
         {% for event in events %}
-          <article class="card">
+          <article class="card animate-in">
             {% if event.poster_url %}
-              <img src="{{ event.poster_url }}" alt="Filmplakat zu {{ event.title }}" style="width: 100%; height: auto; object-fit: cover; border-top-left-radius: 18px; border-top-right-radius: 18px;">
+              <img class="card-poster" src="{{ event.poster_url }}" alt="Filmplakat zu {{ event.title }}">
             {% endif %}
-            <div class="tag" style="margin-bottom: 0.6rem;">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
-            <h3 class="movie-title" style="margin: 0 0 0.4rem; font-size: 1.5rem;">{{ event.title }}</h3>
-            <p style="color: var(--muted); margin: 0 0 0.7rem;">{{ event.location }}</p>
-            {% if event.synopsis %}
-              <p style="font-size: 0.95rem; color: var(--muted);">{{ event.synopsis }}</p>
-            {% endif %}
-            <p style="font-size: 0.95rem; color: var(--muted); margin-top: 0.4rem;">
-              {% if event.available_seats() > 0 %}
-                Noch {{ event.available_seats() }} Platz/Plätze frei
-              {% else %}
-                Ausgebucht – Warteliste {{ event.waitlisted_invites()|length }}
+            <div class="card-body">
+              <div class="card-date">{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</div>
+              <h3 class="movie-title">{{ event.title }}</h3>
+              <p class="card-location">{{ event.location }}</p>
+              {% if event.synopsis %}
+                <p class="card-synopsis">{{ event.synopsis }}</p>
               {% endif %}
-            </p>
+              <p class="card-meta">
+                {% if event.available_seats() > 0 %}
+                  <span class="seats-available">Noch {{ event.available_seats() }} Platz/Plätze frei</span>
+                {% else %}
+                  <span class="seats-full">Ausgebucht – Warteliste {{ event.waitlisted_invites()|length }}</span>
+                {% endif %}
+              </p>
 
-            {% if event.confirmed_invites() %}
-              <div style="margin: 0.5rem 0 1rem;">
-                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.3rem;">Gäste:</div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
-                  {% for invite in event.confirmed_invites() %}
-                    <span style="font-size: 0.85rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(255, 255, 255, 0.1); color: var(--text);">
-                      {{ invite.display_name() }}
-                    </span>
-                  {% endfor %}
+              {% if event.confirmed_invites() %}
+                <div class="card-guests">
+                  <div class="card-guests-label">Gäste</div>
+                  <div class="card-guests-list">
+                    {% for invite in event.confirmed_invites() %}
+                      <span class="guest-chip">{{ invite.display_name() }}</span>
+                    {% endfor %}
+                  </div>
                 </div>
-              </div>
-            {% endif %}
-
-            <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: auto;">
-              <a class="btn" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
-              <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#request-invite-{{ event.id }}">
-                Platz reservieren
-              </button>
-              {% if session.get('is_admin') %}
-                <a class="btn btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Verwalten</a>
               {% endif %}
+
+              <div class="card-actions">
+                <a class="btn btn-sm" href="{{ event.letterboxd_url }}" target="_blank" rel="noreferrer">Letterboxd</a>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#request-invite-{{ event.id }}">
+                  Platz reservieren
+                </button>
+                {% if session.get('is_admin') %}
+                  <a class="btn btn-secondary btn-sm" href="{{ url_for('admin_event_detail', event_id=event.id) }}">Verwalten</a>
+                {% endif %}
+              </div>
             </div>
           </article>
 
           <!-- Modal -->
           <div class="modal fade" id="request-invite-{{ event.id }}" tabindex="-1" aria-labelledby="request-invite-label-{{ event.id }}" aria-hidden="true">
             <div class="modal-dialog">
-              <div class="modal-content bg-dark text-white">
+              <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title" id="request-invite-label-{{ event.id }}">Platz für "{{ event.title }}" reservieren</h5>
+                  <h5 class="modal-title" id="request-invite-label-{{ event.id }}">Platz für „{{ event.title }}" reservieren</h5>
                   <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                   <form method="post" action="{{ url_for('request_invite', event_id=event.id) }}">
-                    <div class="mb-3">
-                      <label for="name" class="form-label">Dein Name</label>
+                    <div class="form-group">
+                      <label for="name">Dein Name</label>
                       <input type="text" id="name" name="name" class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Reservieren</button>
+                    <button type="submit" class="btn">Reservieren</button>
                   </form>
                 </div>
               </div>
@@ -80,27 +81,28 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="card">
-        <p>Noch keine Filmabende geplant. Im Adminbereich kannst du den ersten Abend anlegen.</p>
+      <div class="panel" style="text-align: center; padding: 3rem 2rem;">
+        <p style="color: var(--text-secondary); margin: 0;">Noch keine Filmabende geplant. Im Adminbereich kannst du den ersten Abend anlegen.</p>
       </div>
     {% endif %}
   </section>
 
   <section>
-    <h2 class="tag" style="margin-bottom: 1.5rem;">Kürzlich gelaufene Filme</h2>
+    <div class="section-label">Kürzlich gelaufene Filme</div>
     {% if past_events %}
-      <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem;">
+      <div style="display: grid; gap: 0.6rem;">
         {% for event in past_events %}
-          <li style="padding: 1rem 1.4rem; border-radius: 16px; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(148, 163, 184, 0.2);">
-            <strong>{{ event.title }}</strong>
-            <span style="color: var(--muted);"> – {{ event.starts_at.strftime('%d.%m.%Y') }}</span>
-            <span style="color: var(--muted); float: right;">{{ event.confirmed_invites()|length }} Gäste</span>
-          </li>
+          <div class="past-event animate-in">
+            <div>
+              <span class="past-event-title">{{ event.title }}</span>
+              <span class="past-event-date">– {{ event.starts_at.strftime('%d.%m.%Y') }}</span>
+            </div>
+            <span class="past-event-guests">{{ event.confirmed_invites()|length }} Gäste</span>
+          </div>
         {% endfor %}
-      </ul>
+      </div>
     {% else %}
-      <p style="color: var(--muted);">Noch keine vergangenen Abende – der erste Couchmarathon steht bevor.</p>
+      <p style="color: var(--text-muted);">Noch keine vergangenen Abende – der erste Couchmarathon steht bevor.</p>
     {% endif %}
   </section>
 {% endblock %}
-

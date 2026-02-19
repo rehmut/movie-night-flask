@@ -1,72 +1,68 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Übersicht – Filmabende{% endblock %}
 
 {% block content %}
-  <div class="container content-container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Admin-Übersicht</h1>
-        <a class="btn btn-primary" href="{{ url_for('admin_new_event') }}">
-            <i class="bi bi-plus-circle"></i> Neues Event
-        </a>
+  <div class="panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <h1 style="font-size: 1.8rem;">Admin-Übersicht</h1>
+      <a class="btn" href="{{ url_for('admin_new_event') }}">
+        <i class="bi bi-plus-circle"></i> Neues Event
+      </a>
     </div>
 
     <ul class="nav nav-tabs" id="adminTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab" aria-controls="events" aria-selected="true">Events</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">Filmwünsche</button>
-        </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" role="tab" aria-controls="events" aria-selected="true">Events</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">Filmwünsche</button>
+      </li>
     </ul>
 
     <div class="tab-content" id="adminTabContent">
-        <div class="tab-pane fade show active" id="events" role="tabpanel" aria-labelledby="events-tab">
-            {% if events %}
-                <div class="table-responsive mt-4">
-                    <table class="table table-dark table-striped">
-                        <thead>
-                            <tr>
-                                <th>Event</th>
-                                <th>Datum</th>
-                                <th>Ort</th>
-                                <th>Zusagen</th>
-                                <th>Aktionen</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for event in events %}
-                                <tr>
-                                    <td>{{ event.title }}</td>
-                                    <td>{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</td>
-                                    <td>{{ event.location }}</td>
-                                    <td>{{ event.confirmed_invites()|length }} / {{ event.capacity }}</td>
-                                    <td>
-                                        <a class="btn btn-sm btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">
-                                            <i class="bi bi-pencil-square"></i> Verwalten
-                                        </a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="card bg-dark text-white mt-4">
-                    <div class="card-body">
-                        <p class="card-text">Noch kein Event – leg gleich los und plane den ersten Abend.</p>
-                        <a class="btn btn-primary" href="{{ url_for('admin_new_event') }}">
-                            <i class="bi bi-plus-circle"></i> Event anlegen
-                        </a>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-        <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
-            {% include 'admin_requests.html' %}
-        </div>
+      <div class="tab-pane fade show active" id="events" role="tabpanel" aria-labelledby="events-tab">
+        {% if events %}
+          <div class="table-responsive mt-4">
+            <table class="table table-dark table-striped">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Datum</th>
+                  <th>Ort</th>
+                  <th>Zusagen</th>
+                  <th>Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for event in events %}
+                  <tr>
+                    <td>{{ event.title }}</td>
+                    <td>{{ event.starts_at.strftime('%d.%m.%Y um %H:%M Uhr') }}</td>
+                    <td>{{ event.location }}</td>
+                    <td>{{ event.confirmed_invites()|length }} / {{ event.capacity }}</td>
+                    <td>
+                      <a class="btn btn-sm btn-secondary" href="{{ url_for('admin_event_detail', event_id=event.id) }}">
+                        <i class="bi bi-pencil-square"></i> Verwalten
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary);">
+            <p>Noch kein Event – leg gleich los und plane den ersten Abend.</p>
+            <a class="btn" href="{{ url_for('admin_new_event') }}">
+              <i class="bi bi-plus-circle"></i> Event anlegen
+            </a>
+          </div>
+        {% endif %}
+      </div>
+      <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+        {% include 'admin_requests.html' %}
+      </div>
     </div>
-</div>
-
+  </div>
 {% endblock %}
-

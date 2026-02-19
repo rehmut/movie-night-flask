@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="de">
   <head>
     <meta charset="utf-8">
@@ -9,16 +9,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
   <body>
+    <div class="deco-line"></div>
     <div class="container">
       <nav class="navbar">
-        <a href="{{ url_for('index') }}" class="tag">Heimkino Filmabende</a>
-        <div>
-          <a class="btn btn-secondary" href="{{ url_for('movie_requests') }}">Filmwünsche</a>
+        <a href="{{ url_for('index') }}" class="site-brand">Kino <span>Kirchner</span></a>
+        <div class="nav-links">
+          <a class="btn btn-ghost" href="{{ url_for('movie_requests') }}">Filmwünsche</a>
           {% if session.get('is_admin') %}
-            <a class="btn btn-secondary" href="{{ url_for('admin_dashboard') }}">Übersicht</a>
-            <a class="btn btn-secondary" href="{{ url_for('admin_logout') }}">Abmelden</a>
+            <a class="btn btn-ghost" href="{{ url_for('admin_dashboard') }}">Übersicht</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('admin_logout') }}">Abmelden</a>
           {% else %}
-            <a class="btn btn-secondary" href="{{ url_for('admin_login') }}">Adminbereich</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('admin_login') }}">Admin</a>
           {% endif %}
         </div>
       </nav>

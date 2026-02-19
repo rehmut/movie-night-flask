@@ -1,40 +1,41 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Event erstellen – Filmabende{% endblock %}
 
 {% block content %}
-  <div class="card" style="max-width: 720px; margin: 0 auto;">
+  <div class="panel admin-form-card">
+    <div class="section-label">Neues Event</div>
     <h1 class="section-title" style="margin-bottom: 1.5rem;">Neuer Filmabend</h1>
     <form method="post">
-      <div>
+      <div class="form-group">
         <label for="letterboxd_url">Letterboxd-Link</label>
         <input id="letterboxd_url" name="letterboxd_url" type="url" placeholder="https://letterboxd.com/film/..." required>
       </div>
-      <div>
+      <div class="form-group">
         <label for="title">Titel (optional)</label>
         <input id="title" name="title" placeholder="Wird automatisch von Letterboxd übernommen">
       </div>
-      <div>
+      <div class="form-group">
         <label for="synopsis">Eigene Beschreibung (optional)</label>
         <textarea id="synopsis" name="synopsis" rows="4" placeholder="Falls Letterboxd nichts Passendes liefert oder du persönliche Hinweise teilen möchtest."></textarea>
       </div>
-      <div>
+      <div class="form-group">
         <label for="poster_url">Poster-URL (optional)</label>
         <input id="poster_url" name="poster_url" type="url" placeholder="https://...">
       </div>
-      <div>
+      <div class="form-group">
         <label for="starts_at">Start</label>
         <input id="starts_at" name="starts_at" type="datetime-local" required>
       </div>
-      <div>
+      <div class="form-group">
         <label for="location">Ort</label>
         <input id="location" name="location" placeholder="Wohnzimmer, Kinoraum, etc." required>
       </div>
-      <div>
+      <div class="form-group">
         <label for="capacity">Plätze</label>
         <input id="capacity" name="capacity" type="number" min="1" step="1" value="10" required>
       </div>
-      <div>
+      <div class="form-group">
         <label for="notes">Hinweise für Gäste (optional)</label>
         <textarea id="notes" name="notes" rows="3" placeholder="Snacks stehen bereit, bitte Hausschuhe mitbringen, ..."></textarea>
       </div>
@@ -42,4 +43,3 @@
     </form>
   </div>
 {% endblock %}
-
