@@ -4,6 +4,7 @@
       <thead>
         <tr>
           <th>Titel</th>
+          <th>Von</th>
           <th>Eingereicht am</th>
           <th>Status</th>
           <th>Aktionen</th>
@@ -22,6 +23,7 @@
                 {{ req.title }}
               {% endif %}
             </td>
+            <td>{{ req.suggester_name or "-" }}</td>
             <td>{{ req.created_at.strftime('%d.%m.%Y') }}</td>
             <td>
               <span class="badge

@@ -262,11 +262,14 @@ h3 { font-size: 1.2rem; font-weight: 600; }
 }
 
 .card-poster {
-  width: 100%;
-  aspect-ratio: 2/3;
-  object-fit: contain;
-  background: var(--bg-warm);
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 560px;
+  object-fit: scale-down;
+  background: var(--bg);
   display: block;
+  margin: 0 auto;
 }
 
 .card-body {
@@ -641,6 +644,12 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
 .modal-body input {
   background: #1a1a1e !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
+  color: var(--text) !important;
+  caret-color: var(--amber);
+}
+.modal-body .form-control::placeholder,
+.modal-body input::placeholder {
+  color: var(--text-muted) !important;
 }
 .btn-close-white { filter: invert(0.7); }
 .modal-backdrop.show { opacity: 0.85 !important; background-color: #000 !important; }
@@ -681,12 +690,13 @@ footer {
   padding: 2rem 0;
 }
 .invite-poster {
-  width: 100%;
-  max-height: 380px;
-  object-fit: contain;
+  width: auto;
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: scale-down;
   background: var(--bg-warm);
   border-radius: var(--radius-lg);
-  margin: 1.2rem 0;
+  margin: 1.2rem auto;
   border: 1px solid var(--border);
 }
 .invite-stats {
@@ -735,10 +745,18 @@ footer {
 }
 .request-card:hover { border-color: var(--border-strong); }
 .request-card img {
-  width: 100%;
-  aspect-ratio: 2/3;
-  object-fit: contain;
-  background: var(--bg-warm);
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 460px;
+  object-fit: scale-down;
+  background: var(--bg);
+  margin: 0 auto;
+}
+.request-suggester {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin: 0.35rem 0 0;
 }
 .request-card-body {
   padding: 1rem 1.2rem;
@@ -804,7 +822,15 @@ footer {
 .card-footer { background: var(--surface) !important; border-top-color: var(--border) !important; }
 .card-body { padding: 1.4rem; }
 .card-title { font-family: var(--font-display); }
-.card-img-top { aspect-ratio: 2/3; object-fit: contain; background: var(--bg-warm); }
+.card-img-top {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 460px;
+  object-fit: scale-down;
+  background: var(--bg);
+  margin: 0 auto;
+}
 
 hr { border-color: var(--border); opacity: 1; }
 .lead { color: var(--text-secondary); font-size: 0.95rem; }

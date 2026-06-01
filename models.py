@@ -84,6 +84,7 @@ class MovieRequest(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255), nullable=False)
+    suggester_name = db.Column(db.String(255))
     letterboxd_url = db.Column(db.String(512))
     poster_url = db.Column(db.String(512))
     status = db.Column(db.String(20), nullable=False, default="pending")

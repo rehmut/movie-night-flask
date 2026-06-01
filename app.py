@@ -9,6 +9,7 @@ from functools import wraps
 from typing import List
 
 import qrcode
+from sqlalchemy import inspect, text
 from flask import (
     Flask,
     Response,
@@ -39,6 +40,12 @@ def create_app() -> Flask:
 
     with app.app_context():
         db.create_all()
+        columns = {column["name"] for column in inspect(db.engine).get_columns("movie_requests")}
+        if "suggester_name" not in columns:
+            db.session.execute(
+                text("ALTER TABLE movie_requests ADD COLUMN suggester_name VARCHAR(255)")
+            )
+            db.session.commit()
 
     def is_admin() -> bool:
         return session.get("is_admin", False)
@@ -500,9 +507,10 @@ def create_app() -> Flask:
     def movie_requests():
         if request.method == "POST":
             title = request.form.get("title", "").strip()
+            suggester_name = request.form.get("suggester_name", "").strip()
             letterboxd_url = request.form.get("letterboxd_url", "").strip()
 
-            if not title:
+            if not title or not suggester_name:
                 flash("Bitte fülle alle Pflichtfelder aus.", "warning")
                 return redirect(url_for("movie_requests"))
 
@@ -520,6 +528,7 @@ def create_app() -> Flask:
 
             movie_request = MovieRequest(
                 title=title,
+                suggester_name=suggester_name,
                 letterboxd_url=letterboxd_url,
                 poster_url=poster_url,
             )

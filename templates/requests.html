@@ -15,6 +15,10 @@
     <h2 style="margin-bottom: 1.2rem;">Neuen Film vorschlagen</h2>
     <form method="post" action="{{ url_for('movie_requests') }}">
       <div class="form-group">
+        <label for="suggester_name">Dein Name</label>
+        <input type="text" id="suggester_name" name="suggester_name" class="form-control" required>
+      </div>
+      <div class="form-group">
         <label for="title">Filmtitel</label>
         <input type="text" id="title" name="title" class="form-control" required>
       </div>
@@ -44,6 +48,9 @@
                     {{ req.title }}
                   {% endif %}
                 </h5>
+                {% if req.suggester_name %}
+                  <p class="request-suggester">Vorgeschlagen von {{ req.suggester_name }}</p>
+                {% endif %}
               </div>
               <div class="card-footer">
                 <span class="badge
