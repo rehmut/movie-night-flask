@@ -22,7 +22,12 @@ from flask import (
 )
 
 from config import Config
-from letterboxd import LetterboxdError, fetch_metadata, normalize_letterboxd_url
+from letterboxd import (
+    LetterboxdError,
+    fetch_metadata,
+    normalize_letterboxd_url,
+    title_from_letterboxd_url,
+)
 from models import Event, Invite, db, MovieRequest
 
 
@@ -86,6 +91,9 @@ def create_app() -> Flask:
             warning = f"Letterboxd-Daten konnten nicht geladen werden: {exc}"
             try:
                 normalized_url = normalize_letterboxd_url(letterboxd_url)
+                fallback_title = title_from_letterboxd_url(normalized_url)
+                if fallback_title:
+                    metadata["title"] = fallback_title
             except LetterboxdError:
                 normalized_url = letterboxd_url
         return normalized_url or letterboxd_url, metadata, warning

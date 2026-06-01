@@ -2,7 +2,7 @@
 
 import re
 from typing import Dict
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import requests
 from flask import current_app
@@ -24,11 +24,38 @@ def normalize_letterboxd_url(url: str) -> str:
         url = "https://" + url
 
     parsed = urlparse(url)
-    if not parsed.netloc.endswith("letterboxd.com"):
+    host = parsed.netloc.lower()
+    if host not in {"letterboxd.com", "www.letterboxd.com"} and not host.endswith(
+        ".letterboxd.com"
+    ):
         raise LetterboxdError("URL muss von letterboxd.com stammen")
 
-    cleaned = parsed._replace(query="", fragment="").geturl()
-    return cleaned.rstrip("/")
+    cleaned = parsed._replace(query="", fragment="").geturl().rstrip("/")
+    parts = [part for part in parsed.path.split("/") if part]
+    if len(parts) == 2 and parts[0] == "film":
+        return cleaned + "/"
+    return cleaned
+
+
+def title_from_letterboxd_url(url: str) -> str | None:
+    normalized = normalize_letterboxd_url(url)
+    parsed = urlparse(normalized)
+    parts = [part for part in parsed.path.split("/") if part]
+
+    try:
+        film_index = parts.index("film")
+    except ValueError:
+        return None
+
+    if film_index + 1 >= len(parts):
+        return None
+
+    slug = unquote(parts[film_index + 1]).strip()
+    if not slug:
+        return None
+
+    words = [word for word in slug.replace("-", " ").split() if word]
+    return " ".join(word.capitalize() for word in words) or None
 
 
 def fetch_metadata(letterboxd_url: str) -> Dict[str, str]:
@@ -51,6 +78,11 @@ def fetch_metadata(letterboxd_url: str) -> Dict[str, str]:
         response = requests.get(normalized, timeout=timeout, headers=headers)
     except requests.RequestException as exc:
         raise LetterboxdError("Letterboxd ist nicht erreichbar") from exc
+
+    if response.status_code == 403:
+        raise LetterboxdError(
+            "Letterboxd blockiert den automatischen Abruf. Der Link wurde trotzdem gespeichert."
+        )
 
     if response.status_code >= 400:
         raise LetterboxdError(
