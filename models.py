@@ -89,4 +89,20 @@ class MovieRequest(db.Model):
     poster_url = db.Column(db.String(512))
     status = db.Column(db.String(20), nullable=False, default="pending")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    votes = db.relationship("MovieVote", cascade="all, delete-orphan", lazy="selectin")
+
+
+class MovieVote(db.Model):
+    __tablename__ = "movie_votes"
+    id = db.Column(db.Integer, primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey("movie_requests.id"), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    name_key = db.Column(db.String(255), nullable=False)
+    __table_args__ = (db.UniqueConstraint("request_id", "name_key"),)
+
+
+class MovieIdentity(db.Model):
+    __tablename__ = "movie_identities"
+    key = db.Column(db.String(768), primary_key=True)
+    request_id = db.Column(db.Integer, db.ForeignKey("movie_requests.id"), nullable=False)
 

@@ -844,3 +844,31 @@ hr { border-color: var(--border); opacity: 1; }
 
 /* table-responsive */
 .table-responsive { overflow-x: auto; }
+
+/* Film wishes */
+.wishes-header { display: flex; align-items: baseline; gap: 1rem; margin: 2rem 0; }
+.wishes-header span, .wish-info p { color: var(--text-secondary); }
+.wish-create { border-block: 1px solid var(--border-strong); padding: 1rem 0; }
+.wish-create summary { cursor: pointer; color: var(--text); font-weight: 600; }
+.wish-create-form { margin-top: 1rem; grid-template-columns: 1fr 1fr; align-items: end; }
+.wish-filters { grid-template-columns: 2fr 1fr 1fr auto; align-items: end; margin: 1.5rem 0; }
+.wish-filters select { background: var(--bg-warm); color: var(--text); border: 1px solid var(--border-strong); border-radius: 6px; padding: .75rem; min-width: 0; }
+.wish-row { display: grid; grid-template-columns: 100px minmax(0, 1fr) 210px; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border-strong); align-items: start; }
+.wish-poster { width: 100px; height: auto; border-radius: 4px; }
+.wish-info { grid-column: 2; min-width: 0; }
+.wish-info h2 { font-size: 1.25rem; margin: .6rem 0; overflow-wrap: anywhere; letter-spacing: 0; }
+.wish-info p { margin: .5rem 0; }
+.wish-vote { gap: .6rem; }
+.wish-vote label, .wish-create-form label, .wish-filters label { color: var(--text-secondary); }
+.wish-vote .btn { white-space: normal; }
+.wish-voters { margin-top: .5rem; font-size: .85rem; overflow-wrap: anywhere; }
+.wish-voters summary { cursor: pointer; }
+.wish-choice { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+.wish-choice span { min-width: 0; overflow-wrap: anywhere; }
+.wish-filters .form-group, .wish-create-form .form-group { min-width: 0; }
+@media (max-width: 640px) {
+  .wish-create-form, .wish-filters { grid-template-columns: 1fr 1fr; }
+  .wish-row { grid-template-columns: 72px minmax(0, 1fr); gap: 1rem; }
+  .wish-poster { width: 72px; }
+  .wish-vote { grid-column: 1 / -1; }
+}

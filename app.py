@@ -10,6 +10,7 @@ from typing import List
 
 import qrcode
 from sqlalchemy import inspect, text
+from sqlalchemy.exc import IntegrityError
 from flask import (
     Flask,
     Response,
@@ -28,8 +29,11 @@ from letterboxd import (
     fetch_metadata,
     normalize_letterboxd_url,
     title_from_letterboxd_url,
+    search_metadata,
+    FilmChoicesRequired,
 )
-from models import Event, Invite, db, MovieRequest
+from models import Event, Invite, db, MovieRequest, MovieVote, MovieIdentity
+from wish_helpers import film_keys, name_key, same_film
 
 
 def create_app() -> Flask:
@@ -49,6 +53,30 @@ def create_app() -> Flask:
 
     def is_admin() -> bool:
         return session.get("is_admin", False)
+
+    def screened_film(title: str, letterboxd_url: str = "") -> bool:
+        return any(
+            same_film(title, letterboxd_url, event.title, event.letterboxd_url)
+            for event in Event.query.filter(Event.starts_at < datetime.utcnow()).all()
+        )
+
+    def active_movie_requests() -> list[MovieRequest]:
+        past_events = Event.query.filter(Event.starts_at < datetime.utcnow()).all()
+        return [
+            movie_request
+            for movie_request in MovieRequest.query.order_by(
+                MovieRequest.created_at.desc()
+            ).all()
+            if not any(
+                same_film(
+                    movie_request.title,
+                    movie_request.letterboxd_url,
+                    event.title,
+                    event.letterboxd_url,
+                )
+                for event in past_events
+            )
+        ]
 
     def login_required(view):
         @wraps(view)
@@ -510,13 +538,26 @@ def create_app() -> Flask:
             suggester_name = request.form.get("suggester_name", "").strip()
             letterboxd_url = request.form.get("letterboxd_url", "").strip()
 
-            if not title or not suggester_name:
+            if not title or not suggester_name or len(title) > 255 or len(suggester_name) > 255:
                 flash("Bitte fülle alle Pflichtfelder aus.", "warning")
                 return redirect(url_for("movie_requests"))
 
             poster_url = None
+            original_title = title
+            if letterboxd_url and screened_film(title, letterboxd_url):
+                flash("Dieser Film ist bei uns bereits gelaufen.", "info")
+                return redirect(url_for("movie_requests"))
+            if any(
+                film_keys(title) & film_keys(item.title, item.letterboxd_url)
+                for item in active_movie_requests()
+            ):
+                flash("Dieser Film wurde bereits vorgeschlagen. Stimme beim vorhandenen Wunsch ab.", "info")
+                return redirect(url_for("movie_requests"))
             if letterboxd_url:
                 try:
+                    letterboxd_url = normalize_letterboxd_url(letterboxd_url)
+                    if not title_from_letterboxd_url(letterboxd_url) or len(letterboxd_url) > 512:
+                        raise LetterboxdError("Bitte einen Letterboxd-Filmlink angeben.")
                     normalized_url, metadata, warning = resolve_letterboxd_metadata(letterboxd_url)
                     if warning:
                         flash(warning, "warning")
@@ -525,6 +566,30 @@ def create_app() -> Flask:
                     letterboxd_url = normalized_url
                 except LetterboxdError as e:
                     flash(str(e), "danger")
+                    return redirect(url_for("movie_requests"))
+            else:
+                try:
+                    metadata = search_metadata(title)
+                    title = metadata.get("title") or title
+                    poster_url = metadata.get("poster_url")
+                    letterboxd_url = metadata.get("canonical_url") or ""
+                except FilmChoicesRequired as exc:
+                    return render_template("request_choices.html", choices=exc.choices, suggester_name=suggester_name)
+                except LetterboxdError as exc:
+                    flash(str(exc), "warning")
+
+            keys = film_keys(title, letterboxd_url) | film_keys(original_title)
+            if screened_film(title, letterboxd_url):
+                flash("Dieser Film ist bei uns bereits gelaufen.", "info")
+                return redirect(url_for("movie_requests"))
+            existing = MovieIdentity.query.filter(MovieIdentity.key.in_(keys)).first()
+            duplicate = existing is not None or any(
+                keys & film_keys(item.title, item.letterboxd_url)
+                for item in MovieRequest.query.all()
+            )
+            if duplicate:
+                flash("Dieser Film wurde bereits vorgeschlagen. Stimme beim vorhandenen Wunsch ab.", "info")
+                return redirect(url_for("movie_requests"))
 
             movie_request = MovieRequest(
                 title=title,
@@ -533,18 +598,76 @@ def create_app() -> Flask:
                 poster_url=poster_url,
             )
             db.session.add(movie_request)
-            db.session.commit()
+            try:
+                db.session.flush()
+                db.session.add_all(MovieIdentity(key=key, request_id=movie_request.id) for key in keys)
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                flash("Dieser Film wurde bereits vorgeschlagen.", "info")
+                return redirect(url_for("movie_requests"))
 
             flash("Dein Filmwunsch wurde übermittelt.", "success")
             return redirect(url_for("movie_requests"))
 
-        requests = MovieRequest.query.order_by(MovieRequest.created_at.desc()).all()
+        requests = active_movie_requests()
+        query = request.args.get("q", "").strip()
+        status = request.args.get("status", "")
+        if query:
+            requests = [item for item in requests if name_key(query) in name_key(item.title)]
+        if status in {"pending", "approved", "rejected"}:
+            requests = [item for item in requests if item.status == status]
+        if request.args.get("sort", "votes") == "votes":
+            requests.sort(key=lambda item: len(item.votes), reverse=True)
         return render_template("requests.html", requests=requests, is_admin=is_admin())
+
+    @app.post("/requests/<int:request_id>/vote")
+    def vote_movie(request_id):
+        movie = MovieRequest.query.get_or_404(request_id)
+        name = request.form.get("name", "").strip()
+        if not name or len(name) > 255:
+            flash("Bitte gib deinen Namen an (maximal 255 Zeichen).", "warning")
+        elif screened_film(movie.title, movie.letterboxd_url):
+            flash("Dieser Film ist bei uns bereits gelaufen.", "info")
+        elif movie.status == "rejected":
+            flash("Dieser Wunsch ist bereits abgelehnt.", "warning")
+        else:
+            db.session.add(MovieVote(request_id=movie.id, name=name, name_key=name_key(name)))
+            try:
+                db.session.commit()
+                flash("Deine Stimme wurde gespeichert.", "success")
+            except IntegrityError:
+                db.session.rollback()
+                flash("Unter diesem Namen wurde bereits abgestimmt.", "info")
+        return redirect(url_for("movie_requests", _anchor="wish-" + str(request_id)))
+
+    @app.cli.command("refresh-request-posters")
+    def refresh_request_posters():
+        """Fill missing posters on existing requests without changing their titles."""
+        import click
+        for item in active_movie_requests():
+            if item.poster_url and "backdrop" not in item.poster_url:
+                continue
+            try:
+                metadata = fetch_metadata(item.letterboxd_url) if item.letterboxd_url else search_metadata(item.title)
+                candidate_url = metadata.get("canonical_url") or item.letterboxd_url
+                if candidate_url and any(
+                    other.id != item.id and film_keys("", candidate_url) & (film_keys("", other.letterboxd_url) - {"title:"})
+                    for other in MovieRequest.query.all()
+                ):
+                    click.echo(f"{item.id}: Film bereits vorhanden; bitte manuell pruefen")
+                    continue
+                item.poster_url = metadata.get("poster_url")
+                item.letterboxd_url = metadata.get("canonical_url") or item.letterboxd_url
+                db.session.commit()
+                click.echo(f"{item.id}: {'Plakat geladen' if item.poster_url else 'Kein Plakat gefunden'}")
+            except LetterboxdError as exc:
+                click.echo(f"{item.id}: {exc}")
 
     @app.route("/admin/requests")
     @login_required
     def admin_requests():
-        requests = MovieRequest.query.order_by(MovieRequest.created_at.desc()).all()
+        requests = active_movie_requests()
         return render_template("admin_requests.html", requests=requests)
 
     @app.post("/admin/requests/<int:request_id>/approve")

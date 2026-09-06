@@ -1,72 +1,37 @@
 {% extends "base.html" %}
-
 {% block title %}Filmwünsche{% endblock %}
-
 {% block content %}
-  <header style="margin-bottom: 2.5rem;">
-    <div class="section-label">Community</div>
-    <h1>Filmwünsche</h1>
-    <p style="color: var(--text-secondary); margin-top: 0.6rem;">
-      Hier kannst du sehen, welche Filme bereits vorgeschlagen wurden, und deine eigenen Wünsche einreichen.
-    </p>
-  </header>
-
-  <section class="panel" style="margin-bottom: 2.5rem;">
-    <h2 style="margin-bottom: 1.2rem;">Neuen Film vorschlagen</h2>
-    <form method="post" action="{{ url_for('movie_requests') }}">
-      <div class="form-group">
-        <label for="suggester_name">Dein Name</label>
-        <input type="text" id="suggester_name" name="suggester_name" class="form-control" required>
-      </div>
-      <div class="form-group">
-        <label for="title">Filmtitel</label>
-        <input type="text" id="title" name="title" class="form-control" required>
-      </div>
-      <div class="form-group">
-        <label for="letterboxd_url">Letterboxd-URL (optional)</label>
-        <input type="url" id="letterboxd_url" name="letterboxd_url" class="form-control">
-      </div>
-      <button type="submit" class="btn">Wunsch einreichen</button>
-    </form>
-  </section>
-
-  <section>
-    <div class="section-label">Bestehende Wünsche</div>
-    {% if requests %}
-      <div class="row row-cols-1 row-cols-md-3 g-4">
-        {% for req in requests %}
-          <div class="col">
-            <div class="card h-100">
-              {% if req.poster_url %}
-                <img src="{{ req.poster_url }}" class="card-img-top" alt="{{ req.title }}">
-              {% endif %}
-              <div class="card-body">
-                <h5 class="card-title">
-                  {% if req.letterboxd_url %}
-                    <a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>
-                  {% else %}
-                    {{ req.title }}
-                  {% endif %}
-                </h5>
-                {% if req.suggester_name %}
-                  <p class="request-suggester">Vorgeschlagen von {{ req.suggester_name }}</p>
-                {% endif %}
-              </div>
-              <div class="card-footer">
-                <span class="badge
-                  {% if req.status == 'approved' %}yes
-                  {% elif req.status == 'rejected' %}no
-                  {% else %}pending
-                  {% endif %}">
-                  {{ req.status|capitalize }}
-                </span>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p style="color: var(--text-muted);">Noch keine Filmwünsche vorhanden.</p>
-    {% endif %}
-  </section>
+<header class="wishes-header"><h1>Filmwünsche</h1><span>{{ requests|length }} Filme</span></header>
+<details class="wish-create">
+<summary><i class="bi bi-plus-lg"></i> Film vorschlagen</summary>
+<form method="post" class="wish-create-form">
+<div class="form-group"><label for="suggester_name">Dein Name</label><input id="suggester_name" name="suggester_name" maxlength="255" autocomplete="name" required></div>
+<div class="form-group"><label for="title">Filmtitel</label><input id="title" name="title" maxlength="255" required></div>
+<div class="form-group"><label for="letterboxd_url">Letterboxd-Link (optional)</label><input type="url" id="letterboxd_url" name="letterboxd_url"></div>
+<button class="btn" type="submit">Vorschlagen</button>
+</form></details>
+<form method="get" class="wish-filters">
+<div class="form-group"><label for="q">Film suchen</label><input id="q" name="q" type="search" value="{{ request.args.get('q', '') }}"></div>
+<div class="form-group"><label for="status">Status</label><select id="status" name="status">{% for value, label in [('', 'Alle'), ('pending', 'Offen'), ('approved', 'Angenommen'), ('rejected', 'Abgelehnt')] %}<option value="{{ value }}" {% if request.args.get('status', '') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="form-group"><label for="sort">Sortierung</label><select id="sort" name="sort">{% for value, label in [('votes', 'Meiste Stimmen'), ('newest', 'Neueste zuerst')] %}<option value="{{ value }}" {% if request.args.get('sort', 'votes') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<button class="btn btn-secondary" title="Filter anwenden" aria-label="Filter anwenden"><i class="bi bi-funnel"></i></button>
+</form>
+<section class="wish-list" aria-label="Vorgeschlagene Filme">
+{% for req in requests %}
+<article class="wish-row" id="wish-{{ req.id }}">
+{% if req.poster_url %}<img class="wish-poster" src="{{ req.poster_url }}" alt="Filmplakat zu {{ req.title }}" loading="lazy">{% endif %}
+<div class="wish-info">
+<span class="badge {{ {'pending':'pending', 'approved':'yes', 'rejected':'no'}[req.status] }}">{{ {'pending':'Offen', 'approved':'Angenommen', 'rejected':'Abgelehnt'}[req.status] }}</span>
+<h2>{% if req.letterboxd_url %}<a href="{{ req.letterboxd_url }}" target="_blank" rel="noopener">{{ req.title }}</a>{% else %}{{ req.title }}{% endif %}</h2>
+<p>{{ req.suggester_name or 'Name nicht hinterlegt' }} · {{ req.created_at.strftime('%d.%m.%Y') }}</p>
+<strong>{{ req.votes|length }} {{ 'Stimme' if req.votes|length == 1 else 'Stimmen' }}</strong>
+{% if req.votes %}<details class="wish-voters"><summary>Wer möchte mitsehen?</summary><p>{% for vote in req.votes %}{{ vote.name }}{% if not loop.last %}, {% endif %}{% endfor %}</p></details>{% endif %}
+</div>
+{% if req.status != 'rejected' %}<form method="post" action="{{ url_for('vote_movie', request_id=req.id) }}" class="wish-vote">
+<label for="vote-name-{{ req.id }}">Dein Name</label><input id="vote-name-{{ req.id }}" name="name" maxlength="255" autocomplete="name" required>
+<button class="btn"><i class="bi bi-hand-thumbs-up"></i> Möchte ich sehen</button>
+</form>{% endif %}
+</article>
+{% else %}<p>Keine Filmwünsche gefunden.</p>{% endfor %}
+</section>
 {% endblock %}

@@ -5,6 +5,7 @@
         <tr>
           <th>Titel</th>
           <th>Von</th>
+          <th>Stimmen</th>
           <th>Eingereicht am</th>
           <th>Status</th>
           <th>Aktionen</th>
@@ -24,6 +25,7 @@
               {% endif %}
             </td>
             <td>{{ req.suggester_name or "-" }}</td>
+            <td>{{ req.votes|length }}</td>
             <td>{{ req.created_at.strftime('%d.%m.%Y') }}</td>
             <td>
               <span class="badge

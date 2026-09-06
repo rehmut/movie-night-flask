@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Film auswählen{% endblock %}
+{% block content %}
+<h1>Welchen Film meinst du?</h1>
+<section class="wish-list">
+{% for film in choices %}
+<form method="post" action="{{ url_for('movie_requests') }}" class="wish-choice">
+<input type="hidden" name="suggester_name" value="{{ suggester_name }}">
+<input type="hidden" name="title" value="{{ film.title }}">
+<input type="hidden" name="letterboxd_url" value="{{ film.canonical_url }}">
+<span>{{ film.title }}</span><button class="btn btn-secondary" type="submit">Auswählen</button>
+</form>
+{% endfor %}
+</section>
+<a class="btn btn-secondary" href="{{ url_for('movie_requests') }}">Zurück</a>
+{% endblock %}
