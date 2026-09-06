@@ -182,7 +182,17 @@ def create_app() -> Flask:
     def admin_dashboard():
         events = Event.query.order_by(Event.starts_at.desc()).all()
         requests = MovieRequest.query.order_by(MovieRequest.created_at.desc()).all()
-        return render_template("admin_dashboard.html", events=events, requests=requests)
+        screened_request_ids = {
+            item.id
+            for item in requests
+            if screened_film(item.title, item.letterboxd_url)
+        }
+        return render_template(
+            "admin_dashboard.html",
+            events=events,
+            requests=requests,
+            screened_request_ids=screened_request_ids,
+        )
 
     @app.route("/admin/events/new", methods=["GET", "POST"])
     @login_required
@@ -667,8 +677,111 @@ def create_app() -> Flask:
     @app.route("/admin/requests")
     @login_required
     def admin_requests():
-        requests = active_movie_requests()
-        return render_template("admin_requests.html", requests=requests)
+        requests = MovieRequest.query.order_by(MovieRequest.created_at.desc()).all()
+        screened_request_ids = {
+            item.id
+            for item in requests
+            if screened_film(item.title, item.letterboxd_url)
+        }
+        return render_template(
+            "admin_requests.html",
+            requests=requests,
+            screened_request_ids=screened_request_ids,
+        )
+
+    @app.route("/admin/requests/<int:request_id>/edit", methods=["GET", "POST"])
+    @login_required
+    def admin_edit_request(request_id: int):
+        movie_request = MovieRequest.query.get_or_404(request_id)
+
+        if request.method == "POST":
+            title = request.form.get("title", "").strip()
+            suggester_name = request.form.get("suggester_name", "").strip()
+            letterboxd_url = request.form.get("letterboxd_url", "").strip()
+            poster_url = request.form.get("poster_url", "").strip()
+            status = request.form.get("status", "pending")
+
+            if (
+                not title
+                or not suggester_name
+                or len(title) > 255
+                or len(suggester_name) > 255
+                or status not in {"pending", "approved", "rejected"}
+            ):
+                flash("Bitte prüfe die Pflichtfelder.", "warning")
+                return render_template(
+                    "admin_request_edit.html", movie_request=movie_request
+                )
+
+            if letterboxd_url:
+                try:
+                    letterboxd_url = normalize_letterboxd_url(letterboxd_url)
+                    if not title_from_letterboxd_url(letterboxd_url):
+                        raise LetterboxdError(
+                            "Bitte einen Letterboxd-Filmlink angeben."
+                        )
+                except LetterboxdError as exc:
+                    flash(str(exc), "danger")
+                    return render_template(
+                        "admin_request_edit.html", movie_request=movie_request
+                    )
+
+                link_changed = letterboxd_url != movie_request.letterboxd_url
+                if link_changed or not poster_url:
+                    try:
+                        metadata = fetch_metadata(letterboxd_url)
+                        poster_url = metadata.get("poster_url") or poster_url
+                    except LetterboxdError as exc:
+                        flash(
+                            f"Letterboxd-Daten konnten nicht aktualisiert werden: {exc}",
+                            "warning",
+                        )
+
+            duplicate = any(
+                other.id != movie_request.id
+                and same_film(title, letterboxd_url, other.title, other.letterboxd_url)
+                for other in MovieRequest.query.all()
+            )
+            if duplicate:
+                flash("Dieser Filmwunsch existiert bereits.", "warning")
+                return render_template(
+                    "admin_request_edit.html", movie_request=movie_request
+                )
+
+            keys = film_keys(title, letterboxd_url)
+            try:
+                MovieIdentity.query.filter_by(request_id=movie_request.id).delete()
+                db.session.flush()
+                db.session.add_all(
+                    MovieIdentity(key=key, request_id=movie_request.id) for key in keys
+                )
+                movie_request.title = title
+                movie_request.suggester_name = suggester_name
+                movie_request.letterboxd_url = letterboxd_url or None
+                movie_request.poster_url = poster_url or None
+                movie_request.status = status
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                flash("Dieser Filmwunsch existiert bereits.", "warning")
+                return render_template(
+                    "admin_request_edit.html", movie_request=movie_request
+                )
+
+            flash("Filmwunsch aktualisiert.", "success")
+            return redirect(url_for("admin_dashboard", tab="requests") + "#requests")
+
+        return render_template("admin_request_edit.html", movie_request=movie_request)
+
+    @app.post("/admin/requests/<int:request_id>/delete")
+    @login_required
+    def admin_delete_request(request_id: int):
+        movie_request = MovieRequest.query.get_or_404(request_id)
+        MovieIdentity.query.filter_by(request_id=movie_request.id).delete()
+        db.session.delete(movie_request)
+        db.session.commit()
+        flash("Filmwunsch gelöscht.", "info")
+        return redirect(url_for("admin_dashboard", tab="requests") + "#requests")
 
     @app.post("/admin/requests/<int:request_id>/approve")
     @login_required
@@ -677,7 +790,7 @@ def create_app() -> Flask:
         movie_request.status = "approved"
         db.session.commit()
         flash("Filmwunsch genehmigt.", "success")
-        return redirect(url_for("admin_requests"))
+        return redirect(url_for("admin_dashboard", tab="requests") + "#requests")
 
     @app.post("/admin/requests/<int:request_id>/reject")
     @login_required
@@ -686,7 +799,7 @@ def create_app() -> Flask:
         movie_request.status = "rejected"
         db.session.commit()
         flash("Filmwunsch abgelehnt.", "info")
-        return redirect(url_for("admin_requests"))
+        return redirect(url_for("admin_dashboard", tab="requests") + "#requests")
 
     @app.errorhandler(404)
     def not_found(_: Exception):

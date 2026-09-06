@@ -114,7 +114,9 @@ class WishTests(unittest.TestCase):
         self.assertNotIn(b"Matrix", self.client.get("/requests").data)
         with self.client.session_transaction() as session:
             session["is_admin"] = True
-        self.assertNotIn(b"Matrix", self.client.get("/admin/requests").data)
+        admin_page = self.client.get("/admin/requests").data
+        self.assertIn(b"Matrix", admin_page)
+        self.assertIn(b"Gelaufen", admin_page)
 
         self.client.post(
             f"/requests/{movie_request.id}/vote", data={"name": "Mira"}
@@ -170,6 +172,70 @@ class WishTests(unittest.TestCase):
         self.assertIn("Alien", page)
         self.assertIn("Suspiria (2018)", page)
         self.assertNotIn("<h2>Suspiria</h2>", page)
+
+    def test_admin_can_edit_and_delete_movie_requests(self):
+        movie_request = MovieRequest(
+            title="Alter Titel", suggester_name="Mira", status="pending"
+        )
+        db.session.add(movie_request)
+        db.session.flush()
+        db.session.add(
+            MovieVote(request_id=movie_request.id, name="Leo", name_key="leo")
+        )
+        db.session.commit()
+        with self.client.session_transaction() as session:
+            session["is_admin"] = True
+
+        response = self.client.post(
+            f"/admin/requests/{movie_request.id}/edit",
+            data={
+                "title": "Neuer Titel",
+                "suggester_name": "Miriam",
+                "letterboxd_url": "",
+                "poster_url": "https://example.com/poster.jpg",
+                "status": "approved",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("tab=requests", response.location)
+        db.session.refresh(movie_request)
+        self.assertEqual(movie_request.title, "Neuer Titel")
+        self.assertEqual(movie_request.suggester_name, "Miriam")
+        self.assertEqual(movie_request.status, "approved")
+
+        response = self.client.get("/admin?tab=requests")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Neuer Titel", response.data)
+        self.assertIn(b"requests-tab", response.data)
+
+        response = self.client.post(
+            f"/admin/requests/{movie_request.id}/delete"
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(MovieRequest.query.count(), 0)
+        self.assertEqual(MovieVote.query.count(), 0)
+
+    def test_admin_edit_rejects_duplicate_title(self):
+        first = MovieRequest(title="Alien", suggester_name="Mira")
+        second = MovieRequest(title="Blade Runner", suggester_name="Leo")
+        db.session.add_all([first, second])
+        db.session.commit()
+        with self.client.session_transaction() as session:
+            session["is_admin"] = True
+
+        response = self.client.post(
+            f"/admin/requests/{second.id}/edit",
+            data={
+                "title": "ALIEN",
+                "suggester_name": "Leo",
+                "letterboxd_url": "",
+                "poster_url": "",
+                "status": "pending",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        db.session.refresh(second)
+        self.assertEqual(second.title, "Blade Runner")
 
 
 if __name__ == "__main__":

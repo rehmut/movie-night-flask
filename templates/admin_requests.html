@@ -35,8 +35,14 @@
                 {% endif %}">
                 {{ req.status|capitalize }}
               </span>
+              {% if req.id in screened_request_ids %}
+                <span class="badge waitlist">Gelaufen</span>
+              {% endif %}
             </td>
             <td>
+              <a class="btn btn-sm btn-secondary" href="{{ url_for('admin_edit_request', request_id=req.id) }}" title="Bearbeiten" aria-label="{{ req.title }} bearbeiten">
+                <i class="bi bi-pencil-square"></i>
+              </a>
               {% if req.status == 'pending' %}
                 <form action="{{ url_for('admin_approve_request', request_id=req.id) }}" method="post" class="d-inline">
                   <button type="submit" class="btn btn-sm btn-success">
@@ -49,6 +55,11 @@
                   </button>
                 </form>
               {% endif %}
+              <form action="{{ url_for('admin_delete_request', request_id=req.id) }}" method="post" class="d-inline" onsubmit="return confirm('Filmwunsch wirklich löschen? Stimmen werden ebenfalls gelöscht.');">
+                <button type="submit" class="btn btn-sm btn-danger" title="Löschen" aria-label="{{ req.title }} löschen">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
             </td>
           </tr>
         {% endfor %}

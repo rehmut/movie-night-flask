@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Filmwunsch bearbeiten{% endblock %}
+
+{% block content %}
+  <section class="panel admin-form-card">
+    <div class="section-label">Filmwunsch</div>
+    <h1 class="section-title" style="margin-bottom: 1.5rem;">Filmwunsch bearbeiten</h1>
+    <form method="post">
+      <div class="form-group">
+        <label for="title">Filmtitel</label>
+        <input id="title" name="title" maxlength="255" value="{{ request.form.get('title', movie_request.title) }}" required>
+      </div>
+      <div class="form-group">
+        <label for="suggester_name">Vorgeschlagen von</label>
+        <input id="suggester_name" name="suggester_name" maxlength="255" value="{{ request.form.get('suggester_name', movie_request.suggester_name or '') }}" required>
+      </div>
+      <div class="form-group">
+        <label for="letterboxd_url">Letterboxd-Link (optional)</label>
+        <input id="letterboxd_url" name="letterboxd_url" type="url" value="{{ request.form.get('letterboxd_url', movie_request.letterboxd_url or '') }}">
+      </div>
+      <div class="form-group">
+        <label for="poster_url">Poster-URL (optional)</label>
+        <input id="poster_url" name="poster_url" type="url" value="{{ request.form.get('poster_url', movie_request.poster_url or '') }}">
+      </div>
+      <div class="form-group">
+        <label for="status">Status</label>
+        {% set current_status = request.form.get('status', movie_request.status) %}
+        <select id="status" name="status">
+          <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Offen</option>
+          <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Angenommen</option>
+          <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Abgelehnt</option>
+        </select>
+      </div>
+      <div class="card-actions">
+        <button class="btn" type="submit">Speichern</button>
+        <a class="btn btn-secondary" href="{{ url_for('admin_dashboard', tab='requests') }}#requests">Abbrechen</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}
