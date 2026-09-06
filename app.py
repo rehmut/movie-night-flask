@@ -631,6 +631,62 @@ def create_app() -> Flask:
             requests.sort(key=lambda item: len(item.votes), reverse=True)
         return render_template("requests.html", requests=requests, is_admin=is_admin())
 
+    @app.post("/requests/vote")
+    def vote_movies():
+        name = request.form.get("name", "").strip()
+        request_ids = {
+            int(value)
+            for value in request.form.getlist("request_ids")
+            if value.isdigit()
+        }
+
+        if not name or len(name) > 255:
+            flash("Bitte gib deinen Namen an (maximal 255 Zeichen).", "warning")
+            return redirect(url_for("movie_requests"))
+        if not request_ids:
+            flash("Bitte wähle mindestens einen Film aus.", "warning")
+            return redirect(url_for("movie_requests"))
+
+        normalized_name = name_key(name)
+        movies = MovieRequest.query.filter(MovieRequest.id.in_(request_ids)).all()
+        eligible_movies = [
+            movie
+            for movie in movies
+            if movie.status != "rejected"
+            and not screened_film(movie.title, movie.letterboxd_url)
+        ]
+        existing_ids = {
+            vote.request_id
+            for vote in MovieVote.query.filter(
+                MovieVote.request_id.in_([movie.id for movie in eligible_movies]),
+                MovieVote.name_key == normalized_name,
+            ).all()
+        }
+        new_votes = [
+            MovieVote(request_id=movie.id, name=name, name_key=normalized_name)
+            for movie in eligible_movies
+            if movie.id not in existing_ids
+        ]
+
+        if not new_votes:
+            flash("Deine Auswahl war bereits gespeichert.", "info")
+            return redirect(url_for("movie_requests"))
+
+        db.session.add_all(new_votes)
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash("Deine Auswahl war bereits gespeichert.", "info")
+            return redirect(url_for("movie_requests"))
+
+        count = len(new_votes)
+        flash(
+            f"Deine {'Stimme wurde' if count == 1 else 'Stimmen wurden'} gespeichert.",
+            "success",
+        )
+        return redirect(url_for("movie_requests"))
+
     @app.post("/requests/<int:request_id>/vote")
     def vote_movie(request_id):
         movie = MovieRequest.query.get_or_404(request_id)

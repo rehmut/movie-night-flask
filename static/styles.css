@@ -853,14 +853,23 @@ hr { border-color: var(--border); opacity: 1; }
 .wish-create-form { margin-top: 1rem; grid-template-columns: 1fr 1fr; align-items: end; }
 .wish-filters { grid-template-columns: 2fr 1fr 1fr auto; align-items: end; margin: 1.5rem 0; }
 .wish-filters select { background: var(--bg-warm); color: var(--text); border: 1px solid var(--border-strong); border-radius: 6px; padding: .75rem; min-width: 0; }
-.wish-row { display: grid; grid-template-columns: 100px minmax(0, 1fr) 210px; gap: 1.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border-strong); align-items: start; }
-.wish-poster { width: 100px; height: auto; border-radius: 4px; }
-.wish-info { grid-column: 2; min-width: 0; }
+.wish-voting-form { gap: 0; }
+.wish-vote-bar { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: 1rem; align-items: end; padding: 1rem 0 1.5rem; border-bottom: 1px solid var(--border-strong); }
+.wish-vote-bar .form-group { max-width: 420px; }
+.wish-row { display: grid; grid-template-columns: 34px 100px minmax(0, 1fr); gap: 1.25rem; padding: 1.5rem .75rem; border-bottom: 1px solid var(--border-strong); align-items: start; transition: background var(--transition), box-shadow var(--transition); }
+.wish-row:has(.wish-select input:checked) { background: var(--amber-glow); box-shadow: inset 3px 0 var(--amber); }
+.wish-select { align-self: center; cursor: pointer; }
+.wish-select input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.wish-select span { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--border-strong); border-radius: 50%; color: transparent; transition: all var(--transition); }
+.wish-select:hover span { border-color: var(--amber); }
+.wish-select input:focus-visible + span { outline: 3px solid var(--amber-soft); border-color: var(--amber); }
+.wish-select input:checked + span { color: var(--bg); background: var(--amber); border-color: var(--amber); }
+.wish-poster { grid-column: 2; width: 100px; height: auto; border-radius: 4px; }
+.wish-info { grid-column: 3; min-width: 0; }
+.wish-row:not(.has-poster) .wish-info { grid-column: 2 / 4; }
 .wish-info h2 { font-size: 1.25rem; margin: .6rem 0; overflow-wrap: anywhere; letter-spacing: 0; }
 .wish-info p { margin: .5rem 0; }
-.wish-vote { gap: .6rem; }
-.wish-vote label, .wish-create-form label, .wish-filters label { color: var(--text-secondary); }
-.wish-vote .btn { white-space: normal; }
+.wish-vote-bar label, .wish-create-form label, .wish-filters label { color: var(--text-secondary); }
 .wish-voters { margin-top: .5rem; font-size: .85rem; overflow-wrap: anywhere; }
 .wish-voters summary { cursor: pointer; }
 .wish-choice { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
@@ -868,7 +877,10 @@ hr { border-color: var(--border); opacity: 1; }
 .wish-filters .form-group, .wish-create-form .form-group { min-width: 0; }
 @media (max-width: 640px) {
   .wish-create-form, .wish-filters { grid-template-columns: 1fr 1fr; }
-  .wish-row { grid-template-columns: 72px minmax(0, 1fr); gap: 1rem; }
-  .wish-poster { width: 72px; }
-  .wish-vote { grid-column: 1 / -1; }
+  .wish-vote-bar { grid-template-columns: 1fr; }
+  .wish-vote-bar .form-group { max-width: none; }
+  .wish-row { grid-template-columns: 30px 72px minmax(0, 1fr); gap: .8rem; padding-inline: 0; }
+  .wish-poster { grid-column: 2; width: 72px; }
+  .wish-info { grid-column: 3; }
+  .wish-row:not(.has-poster) .wish-info { grid-column: 2 / 4; }
 }

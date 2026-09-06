@@ -16,9 +16,15 @@
 <div class="form-group"><label for="sort">Sortierung</label><select id="sort" name="sort">{% for value, label in [('votes', 'Meiste Stimmen'), ('newest', 'Neueste zuerst')] %}<option value="{{ value }}" {% if request.args.get('sort', 'votes') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
 <button class="btn btn-secondary" title="Filter anwenden" aria-label="Filter anwenden"><i class="bi bi-funnel"></i></button>
 </form>
+<form method="post" action="{{ url_for('vote_movies') }}" class="wish-voting-form">
+<div class="wish-vote-bar">
+<div class="form-group"><label for="voter-name">Dein Name</label><input id="voter-name" name="name" maxlength="255" autocomplete="name" required></div>
+<button class="btn" type="submit"><i class="bi bi-check2-circle"></i> Auswahl speichern</button>
+</div>
 <section class="wish-list" aria-label="Vorgeschlagene Filme">
 {% for req in requests %}
-<article class="wish-row" id="wish-{{ req.id }}">
+<article class="wish-row {% if req.poster_url %}has-poster{% endif %}" id="wish-{{ req.id }}">
+{% if req.status != 'rejected' %}<label class="wish-select" for="select-wish-{{ req.id }}" title="{{ req.title }} auswählen"><input id="select-wish-{{ req.id }}" type="checkbox" name="request_ids" value="{{ req.id }}"><span><i class="bi bi-check-lg"></i></span></label>{% else %}<span class="wish-select-placeholder"></span>{% endif %}
 {% if req.poster_url %}<img class="wish-poster" src="{{ req.poster_url }}" alt="Filmplakat zu {{ req.title }}" loading="lazy">{% endif %}
 <div class="wish-info">
 <span class="badge {{ {'pending':'pending', 'approved':'yes', 'rejected':'no'}[req.status] }}">{{ {'pending':'Offen', 'approved':'Angenommen', 'rejected':'Abgelehnt'}[req.status] }}</span>
@@ -27,11 +33,8 @@
 <strong>{{ req.votes|length }} {{ 'Stimme' if req.votes|length == 1 else 'Stimmen' }}</strong>
 {% if req.votes %}<details class="wish-voters"><summary>Wer möchte mitsehen?</summary><p>{% for vote in req.votes %}{{ vote.name }}{% if not loop.last %}, {% endif %}{% endfor %}</p></details>{% endif %}
 </div>
-{% if req.status != 'rejected' %}<form method="post" action="{{ url_for('vote_movie', request_id=req.id) }}" class="wish-vote">
-<label for="vote-name-{{ req.id }}">Dein Name</label><input id="vote-name-{{ req.id }}" name="name" maxlength="255" autocomplete="name" required>
-<button class="btn"><i class="bi bi-hand-thumbs-up"></i> Möchte ich sehen</button>
-</form>{% endif %}
 </article>
 {% else %}<p>Keine Filmwünsche gefunden.</p>{% endfor %}
 </section>
+</form>
 {% endblock %}

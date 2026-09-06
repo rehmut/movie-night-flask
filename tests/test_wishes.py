@@ -237,6 +237,40 @@ class WishTests(unittest.TestCase):
         db.session.refresh(second)
         self.assertEqual(second.title, "Blade Runner")
 
+    def test_batch_voting_uses_one_name_for_multiple_movies(self):
+        first = MovieRequest(title="Alien", suggester_name="Mira")
+        second = MovieRequest(
+            title="Blade Runner", suggester_name="Leo", status="approved"
+        )
+        rejected = MovieRequest(
+            title="Rejected", suggester_name="Kim", status="rejected"
+        )
+        db.session.add_all([first, second, rejected])
+        db.session.commit()
+
+        page = self.client.get("/requests").get_data(as_text=True)
+        self.assertEqual(page.count('name="name"'), 1)
+        self.assertEqual(page.count('name="request_ids"'), 2)
+
+        response = self.client.post(
+            "/requests/vote",
+            data={
+                "name": "Mira",
+                "request_ids": [str(first.id), str(second.id), str(rejected.id)],
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(MovieVote.query.count(), 2)
+
+        self.client.post(
+            "/requests/vote",
+            data={
+                "name": " mira ",
+                "request_ids": [str(first.id), str(second.id)],
+            },
+        )
+        self.assertEqual(MovieVote.query.count(), 2)
+
 
 if __name__ == "__main__":
     unittest.main()
