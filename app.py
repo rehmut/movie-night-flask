@@ -611,6 +611,13 @@ def create_app() -> Flask:
             try:
                 db.session.flush()
                 db.session.add_all(MovieIdentity(key=key, request_id=movie_request.id) for key in keys)
+                db.session.add(
+                    MovieVote(
+                        request_id=movie_request.id,
+                        name=suggester_name,
+                        name_key=name_key(suggester_name),
+                    )
+                )
                 db.session.commit()
             except IntegrityError:
                 db.session.rollback()

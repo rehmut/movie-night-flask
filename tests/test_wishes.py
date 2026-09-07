@@ -32,6 +32,7 @@ class WishTests(unittest.TestCase):
         self.assertEqual(self.submit().status_code, 302)
         item = MovieRequest.query.one()
         self.assertTrue(item.poster_url)
+        self.assertEqual(MovieVote.query.one().name, "Mira")
         self.submit(title=" THE   MATRIX ", name="Leo")
         self.assertEqual(MovieRequest.query.count(), 1)
         for name in ["Mira", " mira ", "MIRA", "Leo", "   "]:
@@ -51,11 +52,21 @@ class WishTests(unittest.TestCase):
         self.submit()
         item = MovieRequest.query.one()
         self.assertIsNone(item.poster_url)
+        self.assertEqual(MovieVote.query.count(), 1)
         self.assertNotIn("wish-poster\"", self.client.get("/requests").get_data(as_text=True))
         item.status = "rejected"
         db.session.commit()
         self.client.post(f"/requests/{item.id}/vote", data={"name": "Mira"})
-        self.assertEqual(MovieVote.query.count(), 0)
+        self.assertEqual(MovieVote.query.count(), 1)
+
+    def test_create_form_is_visible_and_filters_are_collapsed(self):
+        page = self.client.get("/requests").get_data(as_text=True)
+        self.assertIn('<section class="wish-create">', page)
+        self.assertIn('<details class="wish-filter-panel"', page)
+        self.assertNotIn('<details class="wish-create">', page)
+
+        filtered_page = self.client.get("/requests?q=Alien").get_data(as_text=True)
+        self.assertIn('<details class="wish-filter-panel" open>', filtered_page)
 
     @patch("letterboxd.fetch_metadata")
     @patch("letterboxd.requests.get")

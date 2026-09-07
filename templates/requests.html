@@ -2,20 +2,24 @@
 {% block title %}Filmwünsche{% endblock %}
 {% block content %}
 <header class="wishes-header"><h1>Filmwünsche</h1><span>{{ requests|length }} Filme</span></header>
-<details class="wish-create">
-<summary><i class="bi bi-plus-lg"></i> Film vorschlagen</summary>
+<section class="wish-create">
+<h2><i class="bi bi-plus-lg"></i> Film vorschlagen</h2>
 <form method="post" class="wish-create-form">
 <div class="form-group"><label for="suggester_name">Dein Name</label><input id="suggester_name" name="suggester_name" maxlength="255" autocomplete="name" required></div>
 <div class="form-group"><label for="title">Filmtitel</label><input id="title" name="title" maxlength="255" required></div>
 <div class="form-group"><label for="letterboxd_url">Letterboxd-Link (optional)</label><input type="url" id="letterboxd_url" name="letterboxd_url"></div>
 <button class="btn" type="submit">Vorschlagen</button>
-</form></details>
+</form>
+</section>
+<details class="wish-filter-panel" {% if request.args.get('q') or request.args.get('status') or request.args.get('sort', 'votes') != 'votes' %}open{% endif %}>
+<summary><i class="bi bi-sliders"></i> Suche und Filter</summary>
 <form method="get" class="wish-filters">
 <div class="form-group"><label for="q">Film suchen</label><input id="q" name="q" type="search" value="{{ request.args.get('q', '') }}"></div>
 <div class="form-group"><label for="status">Status</label><select id="status" name="status">{% for value, label in [('', 'Alle'), ('pending', 'Offen'), ('approved', 'Angenommen'), ('rejected', 'Abgelehnt')] %}<option value="{{ value }}" {% if request.args.get('status', '') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
 <div class="form-group"><label for="sort">Sortierung</label><select id="sort" name="sort">{% for value, label in [('votes', 'Meiste Stimmen'), ('newest', 'Neueste zuerst')] %}<option value="{{ value }}" {% if request.args.get('sort', 'votes') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
 <button class="btn btn-secondary" title="Filter anwenden" aria-label="Filter anwenden"><i class="bi bi-funnel"></i></button>
 </form>
+</details>
 <form method="post" action="{{ url_for('vote_movies') }}" class="wish-voting-form">
 <div class="wish-vote-bar">
 <div class="form-group"><label for="voter-name">Dein Name</label><input id="voter-name" name="name" maxlength="255" autocomplete="name" required></div>
